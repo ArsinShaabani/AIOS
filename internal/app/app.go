@@ -16,6 +16,7 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/brain"
 	"github.com/ArsinShaabani/AIOS/internal/config"
 	"github.com/ArsinShaabani/AIOS/internal/devices"
+	"github.com/ArsinShaabani/AIOS/internal/documents"
 	"github.com/ArsinShaabani/AIOS/internal/llm"
 	"github.com/ArsinShaabani/AIOS/internal/memory"
 	"github.com/ArsinShaabani/AIOS/internal/mqttbridge"
@@ -49,6 +50,7 @@ type App struct {
 	Secrets *security.Secrets
 
 	Memory        *memory.Service
+	Documents     *documents.Service
 	Personality   *personality.Engine
 	Agents        *agents.Registry
 	Devices       *devices.Service

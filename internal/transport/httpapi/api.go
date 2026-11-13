@@ -16,6 +16,7 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/brain"
 	"github.com/ArsinShaabani/AIOS/internal/config"
 	"github.com/ArsinShaabani/AIOS/internal/devices"
+	"github.com/ArsinShaabani/AIOS/internal/documents"
 	"github.com/ArsinShaabani/AIOS/internal/memory"
 	"github.com/ArsinShaabani/AIOS/internal/observability"
 	"github.com/ArsinShaabani/AIOS/internal/personality"
@@ -38,6 +39,7 @@ type API struct {
 	Secrets       *security.Secrets
 	Brain         *brain.Engine
 	Memory        *memory.Service
+	Documents     *documents.Service
 	Devices       *devices.Service
 	Personality   *personality.Engine
 	Agents        *agents.Registry

@@ -38,6 +38,14 @@ func (a *API) registerDataRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /api/v1/memories/{id}", a.perm(securityPermMemoryWrite, a.handleDeleteMemory))
 	mux.HandleFunc("DELETE /api/v1/memories", a.perm(securityPermMemoryWrite, a.handleWipeMemories))
 
+	// Document RAG.
+	mux.HandleFunc("GET /api/v1/documents", a.perm(securityPermMemoryRead, a.handleListDocuments))
+	mux.HandleFunc("POST /api/v1/documents", a.perm(securityPermMemoryWrite, a.handleIngestDocument))
+	mux.HandleFunc("GET /api/v1/documents/search", a.perm(securityPermMemoryRead, a.handleSearchDocuments))
+	mux.HandleFunc("GET /api/v1/documents/{id}", a.perm(securityPermMemoryRead, a.handleGetDocument))
+	mux.HandleFunc("GET /api/v1/documents/{id}/chunks", a.perm(securityPermMemoryRead, a.handleDocumentChunks))
+	mux.HandleFunc("DELETE /api/v1/documents/{id}", a.perm(securityPermMemoryWrite, a.handleDeleteDocument))
+
 	mux.HandleFunc("GET /api/v1/devices", a.authed(a.handleListDevices))
 	mux.HandleFunc("POST /api/v1/devices", a.perm(securityPermDevicesWrite, a.handleCreateDevice))
 	mux.HandleFunc("GET /api/v1/devices/{id}", a.authed(a.handleGetDevice))

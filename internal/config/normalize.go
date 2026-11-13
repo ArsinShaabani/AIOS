@@ -129,5 +129,29 @@ func (c *Config) Normalize() error {
 	if c.MQTT.Bridge.RequestsPerMinute <= 0 {
 		c.MQTT.Bridge.RequestsPerMinute = 30
 	}
+	if c.RAG.ChunkSize <= 0 {
+		c.RAG.ChunkSize = 900
+	}
+	if c.RAG.ChunkOverlap < 0 {
+		c.RAG.ChunkOverlap = 0
+	}
+	if c.RAG.ChunkOverlap >= c.RAG.ChunkSize {
+		c.RAG.ChunkOverlap = c.RAG.ChunkSize / 4
+	}
+	if c.RAG.MaxChunks <= 0 {
+		c.RAG.MaxChunks = 500
+	}
+	if c.RAG.TopK <= 0 {
+		c.RAG.TopK = 5
+	}
+	if c.RAG.EmbedBatch <= 0 {
+		c.RAG.EmbedBatch = 16
+	}
+	if c.RAG.MaxDocumentBytes <= 0 {
+		c.RAG.MaxDocumentBytes = 2 << 20
+	}
+	if c.RAG.MinScore <= 0 {
+		c.RAG.MinScore = 0.2
+	}
 	return nil
 }

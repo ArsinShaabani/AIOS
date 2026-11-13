@@ -109,13 +109,28 @@ permissions and an HTTP endpoint; AIOS enforces timeouts and size limits.
 - **Settings:** global JSON settings (SMTP, integrations); secrets are encrypted.
 - **System:** health checks, CPU/memory, maintenance (prune).
 
-## 10. API keys and integrations
+## 10. Documents
+
+**Documents** lets you upload reference material (Markdown, text, HTML, JSON, CSV)
+and ask questions with citations. Uploads are chunked, embedded and kept in your
+private index; nothing is shared between users.
+
+- Drag a file and optional title, then **Upload**.
+- **Search** shows the best passages with document name, chunk number and score.
+- **Chunks** opens the exact indexed text for auditing.
+- The assistant can call `document_search` automatically when a question matches
+  your uploaded material; answers include the passage titles/ids.
+- Deleting a document removes its chunks and vectors immediately.
+- Limits: 2 MiB per document, 500 chunks, configurable in `rag`.
+
+
+## 11. API keys and integrations
 
 Profile → API keys → create with a scope subset. Use `Authorization: Bearer
 aios_…` for scripts. Device firmware uses device tokens instead. GraphQL is at
 `/graphql`; the OpenAPI spec at `/openapi.yaml`.
 
-## 11. Privacy and data
+## 12. Privacy and data
 
 - Local SQLite by default; no telemetry leaves the host.
 - Cloud model calls only send the prompt you trigger (plus memory context).
@@ -123,7 +138,7 @@ aios_…` for scripts. Device firmware uses device tokens instead. GraphQL is at
 - Back up `data/aios.db` and `data/keys`; the keys are required to decrypt stored
   secrets.
 
-## 12. Troubleshooting
+## 13. Troubleshooting
 
 | Problem | Solution |
 |---|---|

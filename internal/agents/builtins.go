@@ -10,14 +10,14 @@ import (
 // Builtins returns the shipped agent catalogue. Core tools are available to the
 // general agent; specialists get narrower, cheaper tool sets.
 func Builtins() []domain.Agent {
-	core := []string{"web_search", "web_fetch", "memory_search", "memory_save", "schedule_reminder", "device_list", "device_command", "home_assistant"}
+	core := []string{"web_search", "web_fetch", "memory_search", "memory_save", "document_search", "schedule_reminder", "device_list", "device_command", "home_assistant"}
 	return []domain.Agent{
 		{ID: "agent_general", Name: "General", Description: "General assistant with tools for search, memory, devices and reminders.",
 			SystemPrompt: "You are the general assistant. Answer directly; use a tool when it makes the answer more accurate.",
 			Tools:        core, Keywords: []string{"help", "assistant", "کمک", "دستیار"}, Priority: 1, Enabled: true, Builtin: true},
 		{ID: "agent_search", Name: "Search", Description: "Web research, page reading, comparison and fact checking.",
 			SystemPrompt: "You are a research agent. Search the web, read the most relevant pages, cite URLs and clearly separate facts from inference. If sources disagree, say so.",
-			Tools:        []string{"web_search", "web_fetch", "knowledge_lookup", "memory_save"},
+			Tools:        []string{"web_search", "web_fetch", "knowledge_lookup", "memory_save", "document_search"},
 			Keywords:     []string{"search", "google", "news", "research", "compare", "who is", "what is", "latest", "جستجو", "تحقیق", "خبر", "آخرین"},
 			Priority:     5, Enabled: true, Builtin: true},
 		{ID: "agent_home", Name: "Home", Description: "Smart-home control through Home Assistant and local devices.",
@@ -62,7 +62,7 @@ func Builtins() []domain.Agent {
 			Priority:     4, Enabled: true, Builtin: true},
 		{ID: "agent_knowledge", Name: "Knowledge", Description: "Encyclopaedic answers with citations.",
 			SystemPrompt: "You are a knowledge agent. Use Wikipedia and web sources, cite them, and state uncertainty honestly.",
-			Tools:        []string{"knowledge_lookup", "web_fetch"},
+			Tools:        []string{"knowledge_lookup", "web_fetch", "document_search"},
 			Keywords:     []string{"history", "define", "meaning", "encyclopedia", "تاریخ", "معنی", "تعریف", "دانشنامه"},
 			Priority:     3, Enabled: true, Builtin: true},
 	}

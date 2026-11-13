@@ -132,7 +132,7 @@
   const NAV = [
     { group: "Workspace", items: [
       ["overview", "Overview", "◎"], ["chat", "Chat", "✎"], ["sessions", "Sessions", "▤"],
-      ["memory", "Memory", "❖"], ["devices", "Devices", "◈"],
+      ["memory", "Memory", "❖"], ["documents", "Documents", "❐"], ["devices", "Devices", "◈"],
     ]},
     { group: "Intelligence", items: [
       ["agents", "Agents", "✦"], ["models", "Model Router", "⇄"], ["usage", "Usage & Cost", "◷"],
@@ -192,7 +192,7 @@
     }, 1000);
   }
   const TITLES = {
-    overview: "Overview", chat: "Chat", sessions: "Sessions", memory: "Memory", devices: "Devices",
+    overview: "Overview", chat: "Chat", sessions: "Sessions", memory: "Memory", documents: "Documents", devices: "Devices",
     agents: "Agents", models: "Model Router", usage: "Usage & Cost", plugins: "Plugins",
     queue: "Task Queue", settings: "Settings", users: "Users", logs: "Audit Log", system: "System",
   };

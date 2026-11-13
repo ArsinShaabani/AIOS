@@ -183,6 +183,16 @@ func Default() Config {
 			UserAgent:        "AIOS/1.0 (+https://github.com/ArsinShaabani/AIOS)",
 			BlockPrivateIPs:  true,
 		},
+		RAG: RAGConfig{
+			Enabled:          true,
+			MaxDocumentBytes: 2 << 20,
+			ChunkSize:        900,
+			ChunkOverlap:     120,
+			MaxChunks:        500,
+			TopK:             5,
+			EmbedBatch:       16,
+			MinScore:         0.2,
+		},
 	}
 }
 

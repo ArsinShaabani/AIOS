@@ -11,6 +11,7 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/adapters/vector"
 	"github.com/ArsinShaabani/AIOS/internal/agents"
 	"github.com/ArsinShaabani/AIOS/internal/brain"
+	"github.com/ArsinShaabani/AIOS/internal/documents"
 	"github.com/ArsinShaabani/AIOS/internal/llm"
 	"github.com/ArsinShaabani/AIOS/internal/memory"
 	"github.com/ArsinShaabani/AIOS/internal/personality"
@@ -65,6 +66,7 @@ func (a *App) initAI(ctx context.Context) error {
 	a.Secrets = security.NewSecrets(a.Repos.Settings, a.Keyring)
 	a.Memory = memory.New(a.Repos.Memories, a.Repos.Sessions, a.Repos.Messages, a.Repos.Users,
 		a.Vector, a.Cache, a.Router, a.Config.Memory, a.Config.Vector.Dim, a.Log)
+	a.Documents = documents.New(a.Repos.Documents, a.Vector, a.Router, a.Config.RAG, a.Config.Vector.Dim, a.Log)
 	a.Personality = personality.New(a.Repos.Personalities)
 	a.Agents = agents.New(a.Repos.Agents, a.Log)
 	return nil
@@ -73,7 +75,7 @@ func (a *App) initAI(ctx context.Context) error {
 func (a *App) initAPI() error {
 	a.API = &httpapi.API{
 		Config: a.Config, Repos: a.Repos, Auth: a.Tokens, Auditor: a.Auditor, Secrets: a.Secrets,
-		Brain: a.Brain, Memory: a.Memory, Devices: a.Devices, Personality: a.Personality,
+		Brain: a.Brain, Memory: a.Memory, Documents: a.Documents, Devices: a.Devices, Personality: a.Personality,
 		Agents: a.Agents, Plugins: a.Plugins, Scheduler: a.Scheduler, Router: a.Router,
 		Voice: a.Voice, Queue: a.Queue, Metrics: a.Metrics, System: a.System, Health: a.Health,
 		Bus: a.Bus, Log: a.Log, Version: a.Version,

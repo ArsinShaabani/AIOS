@@ -250,3 +250,13 @@ tools:
   user_agent: "AIOS/1.0 (+https://github.com/ArsinShaabani/AIOS)"
   block_private_ips: true
 
+rag:
+  enabled: true
+  max_document_bytes: 2097152  # 2 MiB per upload
+  chunk_size: 900
+  chunk_overlap: 120
+  max_chunks: 500
+  top_k: 5
+  embed_batch: 16
+  min_score: 0.2
+

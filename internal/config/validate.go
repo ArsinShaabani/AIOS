@@ -168,6 +168,29 @@ func (c *Config) Validate() error {
 			add("mqtt.bridge.max_concurrency must be within [1,64]")
 		}
 	}
+	if c.RAG.Enabled {
+		if c.RAG.MaxDocumentBytes < 1024 || c.RAG.MaxDocumentBytes > 32<<20 {
+			add("rag.max_document_bytes must be within [1024, 33554432]")
+		}
+		if c.RAG.ChunkSize < 200 || c.RAG.ChunkSize > 8000 {
+			add("rag.chunk_size must be within [200,8000]")
+		}
+		if c.RAG.ChunkOverlap < 0 || c.RAG.ChunkOverlap >= c.RAG.ChunkSize {
+			add("rag.chunk_overlap must be >= 0 and smaller than chunk_size")
+		}
+		if c.RAG.MaxChunks < 1 || c.RAG.MaxChunks > 5000 {
+			add("rag.max_chunks must be within [1,5000]")
+		}
+		if c.RAG.TopK < 1 || c.RAG.TopK > 50 {
+			add("rag.top_k must be within [1,50]")
+		}
+		if c.RAG.EmbedBatch < 1 || c.RAG.EmbedBatch > 128 {
+			add("rag.embed_batch must be within [1,128]")
+		}
+		if c.RAG.MinScore < 0 || c.RAG.MinScore > 1 {
+			add("rag.min_score must be within [0,1]")
+		}
+	}
 	if c.Plugins.MaxWASMBytes <= 0 {
 		c.Plugins.MaxWASMBytes = 16 << 20
 	}

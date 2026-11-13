@@ -83,6 +83,35 @@ embedded with the configured embedder (local hash embeddings by default).
 | POST | `/api/v1/device/heartbeat` | device auth: marks online |
 | GET | `/api/v1/device/me` | device auth: own record |
 
+## Documents (RAG)
+
+Upload text-like documents (Markdown, HTML, plain text, JSON, CSV) to make them
+searchable with citations. Files are extracted, chunked (~900 chars with 120
+overlap), embedded with the configured embedder and stored in the vector index.
+
+| Method | Path | Purpose |
+|---|---|---|
+| POST | `/api/v1/documents` | JSON `{title,source,mime,content}` or multipart `file` + optional `title` |
+| GET | `/api/v1/documents?limit=25&offset=0` | list your documents |
+| GET | `/api/v1/documents/{id}?chunks=true` | metadata (and chunks) |
+| GET | `/api/v1/documents/{id}/chunks?limit=100` | chunk viewer |
+| GET | `/api/v1/documents/search?q=refund%20policy&limit=5` | citation-aware retrieval |
+| DELETE | `/api/v1/documents/{id}` | remove document + chunks + vectors |
+
+```bash
+curl -s -X POST localhost:8080/api/v1/documents \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"title":"Policy","mime":"text/markdown","content":"# Refunds\n\nRefunds take five days."}'
+
+curl -s -X POST localhost:8080/api/v1/documents \
+  -H "Authorization: Bearer $TOKEN" -F file=@handbook.pdf.txt -F title=Handbook
+```
+
+Search results include `document_id`, `title`, `chunk_index`, `score` and the
+passage. The `document_search` agent tool exposes the same index to the model, so
+answers can cite uploaded material. Uploads require `memory:write`; reading and
+search require `memory:read`. Limits come from `rag.*` (2 MiB, 500 chunks).
+
 ## Voice
 
 - `GET /api/v1/voice/config` → providers, sample rate, VAD, wake words.

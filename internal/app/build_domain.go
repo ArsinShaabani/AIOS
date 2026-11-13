@@ -41,6 +41,7 @@ func (a *App) initDomain(ctx context.Context) error {
 	deps := tools.Deps{
 		Config: a.Config, Devices: deviceAPI{svc: a.Devices}, Memory: memoryAPI{svc: a.Memory},
 		Scheduler: a.Scheduler, MQTT: a.mqttPublisher(), Home: haAPI, Email: a.buildEmail(ctx),
+		Documents: a.Documents,
 	}
 	if err := tools.BuildAll(registry, deps); err != nil {
 		return err

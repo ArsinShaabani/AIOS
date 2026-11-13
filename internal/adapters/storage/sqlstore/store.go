@@ -18,6 +18,7 @@ type Repositories struct {
 	Tasks         *TaskRepo
 	Tokens        *TokenRepo
 	Stats         *StatsRepo
+	Documents     *DocumentRepo
 }
 
 // NewRepositories wires the repositories over one database handle.
@@ -39,6 +40,7 @@ func NewRepositories(db *DB) *Repositories {
 		Tasks:         NewTaskRepo(db),
 		Tokens:        NewTokenRepo(db),
 		Stats:         NewStatsRepo(db, usage),
+		Documents:     NewDocumentRepo(db),
 	}
 }
 

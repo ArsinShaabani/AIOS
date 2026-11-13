@@ -85,3 +85,15 @@ type ToolsConfig struct {
 	UserAgent        string   `yaml:"user_agent"`
 	BlockPrivateIPs  bool     `yaml:"block_private_ips"`
 }
+
+// RAGConfig controls document ingestion and retrieval.
+type RAGConfig struct {
+	Enabled          bool    `yaml:"enabled"`
+	MaxDocumentBytes int64   `yaml:"max_document_bytes"`
+	ChunkSize        int     `yaml:"chunk_size"`
+	ChunkOverlap     int     `yaml:"chunk_overlap"`
+	MaxChunks        int     `yaml:"max_chunks"`
+	TopK             int     `yaml:"top_k"`
+	EmbedBatch       int     `yaml:"embed_batch"`
+	MinScore         float64 `yaml:"min_score"`
+}

@@ -10,6 +10,7 @@ type Deps struct {
 	Config    config.Config
 	Devices   DeviceAPI
 	Memory    MemoryAPI
+	Documents DocumentAPI
 	Scheduler SchedulerAPI
 	MQTT      MQTTPublisher
 	Home      HomeAssistantAPI
@@ -29,6 +30,9 @@ func BuildAll(reg *Registry, deps Deps) error {
 		return err
 	}
 	if err := RegisterMemoryTools(reg, deps.Memory); err != nil {
+		return err
+	}
+	if err := RegisterDocumentTool(reg, deps.Documents); err != nil {
 		return err
 	}
 	if err := RegisterSchedulerTools(reg, deps.Scheduler); err != nil {
