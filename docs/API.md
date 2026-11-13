@@ -85,7 +85,7 @@ embedded with the configured embedder (local hash embeddings by default).
 
 ## Documents (RAG)
 
-Upload text-like documents (Markdown, HTML, plain text, JSON, CSV) to make them
+Upload documents (Markdown, HTML, PDF, plain text, JSON, CSV) to make them
 searchable with citations. Files are extracted, chunked (~900 chars with 120
 overlap), embedded with the configured embedder and stored in the vector index.
 

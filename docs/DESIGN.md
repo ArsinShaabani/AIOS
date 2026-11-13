@@ -104,7 +104,7 @@ deadlines everywhere, token-budgeted context, streaming, GOGC tuning.
 | 1.3 | ✅ Ed25519 plugin signing + WASM sandbox (wazero) + marketplace manifest |
 | 1.4 | ✅ openWakeWord adapter + per-user voice profiles; Silero VAD and OPUS next |
 | 1.5 | ✅ Authenticated MQTT chat bridge + real-broker tests; multi-instance sessions next |
-| 1.6 | ✅ Document RAG (text/HTML ingest, chunk+embed, citations UI); PDF parser next |
+| 1.6 | ✅ Document RAG (text/HTML/PDF ingest, chunk+embed, citations UI); OCR next |
 | 2.0 | ✅ NATS event bus behind the existing port; incremental Gateway/Brain/Voice extraction next |
 
 ## 6. Risk register
@@ -132,7 +132,7 @@ deadlines everywhere, token-budgeted context, streaming, GOGC tuning.
 - **Load:** `tests/load` drives a running instance with configurable concurrency,
   reports p50/p95/p99 and fails above a 5% error rate.
 - **Gates:** `make cover` (atomic, `-coverpkg`) and `scripts/coverage-gate.sh`.
-  Current measured total is **80.6%** with a de-duplicated merged profile; the
+  Current measured total is **80.7%** with a de-duplicated merged profile; the
   gate enforces **80% overall and 80% per core package**.
 
 ## 8. Configuration precedence

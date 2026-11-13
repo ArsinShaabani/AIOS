@@ -61,7 +61,7 @@ Full stack (Postgres/Redis/Qdrant/Ollama/Whisper/Piper):
 | Providers: local, Ollama, OpenAI-compatible, Anthropic, Gemini | ✅ |
 | Routing rules, fallbacks, breakers, token/cost accounting | ✅ |
 | Three-tier memory + extraction (EN/FA) + semantic recall | ✅ |
-| Document RAG: upload/chunk/embed, citations, document_search tool | ✅ |
+| Document RAG: text/HTML/PDF upload, chunk+embed, citations, document_search tool | ✅ |
 | Personalities, agents, prompt viewer | ✅ |
 | Devices: MQTT, HTTP, capability validation, telemetry | ✅ |
 | Authenticated MQTT chat bridge (API keys, rate limits) | ✅ |
@@ -76,7 +76,7 @@ Full stack (Postgres/Redis/Qdrant/Ollama/Whisper/Piper):
 | Queue visibility timeout + stale task reclaim | ✅ |
 | PostgreSQL integration tests in CI | ✅ |
 | Event bus: in-memory or NATS (horizontal scaling) | ✅ |
-| Test coverage | ✅ 80%+ enforced in CI (currently ~80.6%; see [DESIGN.md](docs/DESIGN.md#7-test-strategy)) |
+| Test coverage | ✅ 80%+ enforced in CI (currently ~80.7%; see [DESIGN.md](docs/DESIGN.md#7-test-strategy)) |
 
 Roadmap, MVP definition and risks: [docs/DESIGN.md](docs/DESIGN.md).
 

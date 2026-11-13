@@ -5,10 +5,12 @@ go 1.27.4
 require (
 	github.com/alicebob/miniredis/v2 v2.40.0
 	github.com/eclipse/paho.mqtt.golang v1.5.1
+	github.com/go-pdf/fpdf v0.9.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/graphql-go/graphql v0.8.1
+	github.com/ledongthuc/pdf v0.0.0-20261020125853-5e46805f718e
 	github.com/lib/pq v1.12.3
 	github.com/mochi-mqtt/server/v2 v2.7.9
 	github.com/nats-io/nats-server/v2 v2.15.3

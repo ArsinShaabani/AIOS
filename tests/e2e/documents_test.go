@@ -60,6 +60,21 @@ func TestDocumentRAGLifecycle(t *testing.T) {
 		t.Fatalf("multipart ingest: %d", resp.StatusCode)
 	}
 
+	// PDF upload path (text-based PDFs are parsed server-side).
+	pdfBody := &bytes.Buffer{}
+	pdfMW := multipart.NewWriter(pdfBody)
+	pdfPart, _ := pdfMW.CreateFormFile("file", "policy.pdf")
+	_, _ = pdfPart.Write(documentsTestPDF(t))
+	_ = pdfMW.Close()
+	pdfResp, err := e.client.Do(newUploadRequest(t, e, "/api/v1/documents", pdfMW.FormDataContentType(), pdfBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pdfResp.Body.Close()
+	if pdfResp.StatusCode != 201 {
+		t.Fatalf("pdf ingest: %d", pdfResp.StatusCode)
+	}
+
 	// RBAC and isolation.
 	_, created := e.do("POST", "/api/v1/admin/users", e.token, map[string]any{
 		"email": "docs-user@test.local", "password": "DocsPassword123!", "role": "user",

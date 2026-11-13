@@ -10,6 +10,9 @@ import (
 // a tokenizer; all other supported types are treated as UTF-8 text.
 func ExtractText(content, mime string) string {
 	trimmed := strings.TrimSpace(content)
+	if strings.Contains(mime, "pdf") {
+		return extractPDF([]byte(content))
+	}
 	if strings.Contains(mime, "html") || strings.Contains(mime, "xhtml") ||
 		strings.HasPrefix(trimmed, "<!doctype") || strings.HasPrefix(trimmed, "<html") {
 		return stripHTML(content)

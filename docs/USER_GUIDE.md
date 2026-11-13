@@ -115,7 +115,7 @@ permissions and an HTTP endpoint; AIOS enforces timeouts and size limits.
 and ask questions with citations. Uploads are chunked, embedded and kept in your
 private index; nothing is shared between users.
 
-- Drag a file and optional title, then **Upload**.
+- Drag a file (Markdown, text, HTML, JSON, CSV, text-based PDF) and optional title, then **Upload**.
 - **Search** shows the best passages with document name, chunk number and score.
 - **Chunks** opens the exact indexed text for auditing.
 - The assistant can call `document_search` automatically when a question matches

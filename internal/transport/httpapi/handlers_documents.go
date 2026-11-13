@@ -179,6 +179,8 @@ func mimeForFile(name string) string {
 		return "text/csv"
 	case ".txt", ".log":
 		return "text/plain"
+	case ".pdf":
+		return "application/pdf"
 	default:
 		return "text/plain"
 	}
