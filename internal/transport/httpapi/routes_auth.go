@@ -34,9 +34,9 @@ func (a *API) registerDataRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /api/v1/personalities/{id}", a.authed(a.handleDeletePersonality))
 
 	mux.HandleFunc("GET /api/v1/memories", a.authed(a.handleListMemories))
-	mux.HandleFunc("POST /api/v1/memories", a.authed(a.handleCreateMemory))
-	mux.HandleFunc("DELETE /api/v1/memories/{id}", a.authed(a.handleDeleteMemory))
-	mux.HandleFunc("DELETE /api/v1/memories", a.authed(a.handleWipeMemories))
+	mux.HandleFunc("POST /api/v1/memories", a.perm(securityPermMemoryWrite, a.handleCreateMemory))
+	mux.HandleFunc("DELETE /api/v1/memories/{id}", a.perm(securityPermMemoryWrite, a.handleDeleteMemory))
+	mux.HandleFunc("DELETE /api/v1/memories", a.perm(securityPermMemoryWrite, a.handleWipeMemories))
 
 	mux.HandleFunc("GET /api/v1/devices", a.authed(a.handleListDevices))
 	mux.HandleFunc("POST /api/v1/devices", a.perm(securityPermDevicesWrite, a.handleCreateDevice))

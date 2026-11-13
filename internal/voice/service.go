@@ -210,6 +210,10 @@ func SplitSentences(text string, maxChars int) []string {
 			}
 		} else if cur.Len() >= maxChars && (unicode.IsSpace(r) || r == '،') {
 			flush()
+		} else if cur.Len() >= maxChars {
+			// Hard-split scripts without spaces so a single long token cannot
+			// exceed the TTS request limit.
+			flush()
 		}
 		last = r
 	}

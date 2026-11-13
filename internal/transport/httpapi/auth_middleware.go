@@ -37,18 +37,6 @@ func (a *API) perm(perm security.Permission, next http.HandlerFunc) http.Handler
 	})
 }
 
-// admin restricts a route to the admin role.
-func (a *API) admin(next http.HandlerFunc) http.HandlerFunc {
-	return a.authed(func(w http.ResponseWriter, r *http.Request) {
-		p := principalFrom(r.Context())
-		if p == nil || p.Role != domain.RoleAdmin {
-			a.fail(w, r, platform.Forbidden("http.admin_only", "administrator access required"))
-			return
-		}
-		next(w, r)
-	})
-}
-
 // deviceAuthed authenticates a device token.
 func (a *API) deviceAuthed(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

@@ -38,14 +38,6 @@ func (a *API) handleGraphQL(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, status, result)
 }
 
-func apiInvalidQuery() error {
-	return &queryError{}
-}
-
-type queryError struct{}
-
-func (e *queryError) Error() string { return "a GraphQL query is required" }
-
 func (a *API) handleGraphQLPage(w http.ResponseWriter, r *http.Request) {
 	html := `<!doctype html><html><head><meta charset="utf-8"><title>AIOS GraphQL</title>
 <style>body{font-family:system-ui;margin:2rem;max-width:900px;background:#0f1115;color:#e6e6e6}

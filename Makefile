@@ -35,8 +35,7 @@ race:
 	$(GO) test -race ./internal/... ./tests/e2e/...
 
 cover:
-	$(GO) test -covermode=atomic -coverpkg=./internal/... -coverprofile=coverage.out ./internal/... ./tests/e2e/...
-	$(GO) tool cover -func=coverage.out | tail -1
+	./scripts/coverage.sh coverage.out
 
 cover-gate: cover
 	./scripts/coverage-gate.sh

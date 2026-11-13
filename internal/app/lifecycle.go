@@ -68,8 +68,14 @@ func (a *App) Start(ctx context.Context) error {
 	}
 }
 
-// Close shuts everything down in reverse order.
+// Close shuts everything down in reverse order. It is idempotent.
 func (a *App) Close(ctx context.Context) {
+	a.closeOnce.Do(func() {
+		a.close(ctx)
+	})
+}
+
+func (a *App) close(ctx context.Context) {
 	if a.cancel != nil {
 		a.cancel()
 	}

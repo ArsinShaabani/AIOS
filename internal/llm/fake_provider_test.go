@@ -18,6 +18,7 @@ type fakeProvider struct {
 	err        error
 	content    string
 	embed      []float32
+	embedErr   error
 	streamErr  error
 }
 
@@ -65,6 +66,9 @@ func (f *fakeProvider) Embed(ctx context.Context, model string, inputs []string)
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.embedCalls++
+	if f.embedErr != nil {
+		return nil, f.embedErr
+	}
 	if f.embed == nil {
 		return nil, ports.ErrNotSupported
 	}

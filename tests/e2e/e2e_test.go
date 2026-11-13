@@ -27,11 +27,14 @@ type env struct {
 	token  string
 }
 
-func newEnv(t *testing.T) *env {
+func newEnv(t *testing.T) *env { return newEnvWith(t, nil) }
+
+func newEnvWith(t *testing.T, mutate func(*config.Config)) *env {
 	t.Helper()
 	cfg := config.Default()
 	cfg.App.DataDir = t.TempDir()
 	cfg.Database.DSN = "e2e.db"
+	cfg.Server.Addr = "127.0.0.1:0"
 	cfg.Security.Bootstrap = config.BootstrapUser{Email: "admin@test.local", Name: "Admin", Password: adminPassword}
 	cfg.Security.BcryptCost = 8
 	cfg.Security.AccessTTL = config.Duration(10 * time.Minute)
@@ -45,6 +48,9 @@ func newEnv(t *testing.T) *env {
 	cfg.Scheduler.Enabled = true
 	cfg.Memory.LongTermEnabled = true
 	cfg.Memory.SemanticEnabled = true
+	if mutate != nil {
+		mutate(&cfg)
+	}
 	if err := cfg.Validate(); err != nil {
 		t.Fatalf("test config: %v", err)
 	}

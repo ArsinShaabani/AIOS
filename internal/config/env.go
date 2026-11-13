@@ -50,16 +50,19 @@ func applyEnv(v reflect.Value, prefix string) {
 		}
 		envName := prefix + "_" + strings.ToUpper(strings.ReplaceAll(name, "-", "_"))
 
+		// Duration is an int64 underneath, so it must be handled before the
+		// numeric cases (otherwise "90s" would be parsed as an integer).
+		if field.Type() == reflect.TypeOf(Duration(0)) {
+			if raw, ok := os.LookupEnv(envName); ok {
+				if err := setDuration(field, raw); err != nil {
+					fmt.Fprintf(os.Stderr, "config: invalid %s=%q: %v\n", envName, raw, err)
+				}
+			}
+			continue
+		}
+
 		switch field.Kind() {
 		case reflect.Struct:
-			if _, ok := field.Interface().(Duration); ok {
-				if raw, ok := os.LookupEnv(envName); ok {
-					if err := setDuration(field, raw); err != nil {
-						fmt.Fprintf(os.Stderr, "config: invalid %s=%q: %v\n", envName, raw, err)
-					}
-				}
-				continue
-			}
 			applyEnv(field, envName)
 		case reflect.Pointer:
 			if field.Type().Elem().Kind() == reflect.Bool {

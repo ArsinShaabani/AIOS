@@ -19,6 +19,7 @@ const (
 	securityPermQueueRead     = security.PermQueueRead
 	securityPermQueueWrite    = security.PermQueueWrite
 	securityPermMemoryRead    = security.PermMemoryRead
+	securityPermMemoryWrite   = security.PermMemoryWrite
 	securityPermAdmin         = security.PermAdmin
 )
 

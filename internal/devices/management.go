@@ -19,19 +19,35 @@ func (s *Service) ListAll(ctx context.Context, filter ports.DeviceFilter, page p
 	return s.repo.ListAll(ctx, filter, page)
 }
 
-// Update rewrites device metadata (credentials are managed separately).
+// Update applies a partial patch to a device. Omitted fields keep their current
+// values, which is what PATCH semantics promise and prevents an accidental
+// zeroing of capabilities or protocol.
 func (s *Service) Update(ctx context.Context, userID string, d *domain.Device) error {
 	existing, err := s.Get(ctx, userID, d.ID)
 	if err != nil {
 		return err
 	}
-	existing.Name = d.Name
-	existing.Kind = d.Kind
-	existing.Protocol = d.Protocol
-	existing.Hardware = d.Hardware
-	existing.Room = d.Room
-	existing.Firmware = d.Firmware
-	existing.Metadata = d.Metadata
+	if d.Name != "" {
+		existing.Name = d.Name
+	}
+	if d.Kind != "" {
+		existing.Kind = d.Kind
+	}
+	if d.Protocol != "" {
+		existing.Protocol = d.Protocol
+	}
+	if d.Hardware != "" {
+		existing.Hardware = d.Hardware
+	}
+	if d.Room != "" {
+		existing.Room = d.Room
+	}
+	if d.Firmware != "" {
+		existing.Firmware = d.Firmware
+	}
+	if d.Metadata != nil {
+		existing.Metadata = d.Metadata
+	}
 	if len(d.Capabilities) > 0 {
 		existing.Capabilities = d.Capabilities
 	}

@@ -108,6 +108,7 @@ func buildMessage(from, to, subject, body string) []byte {
 func sanitizeHeader(s string) string {
 	s = strings.ReplaceAll(s, "\r", " ")
 	s = strings.ReplaceAll(s, "\n", " ")
+	s = strings.Join(strings.Fields(s), " ")
 	return platform.Truncate(strings.TrimSpace(s), 200)
 }
 

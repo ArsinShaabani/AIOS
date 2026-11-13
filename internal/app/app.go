@@ -66,9 +66,10 @@ type App struct {
 	API     *httpapi.API
 	HTTP    *http.Server
 
-	cancel  context.CancelFunc
-	wg      sync.WaitGroup
-	started time.Time
+	cancel    context.CancelFunc
+	wg        sync.WaitGroup
+	started   time.Time
+	closeOnce sync.Once
 }
 
 // New builds the application graph. It does not start listeners; call Start.

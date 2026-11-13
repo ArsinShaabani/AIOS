@@ -96,7 +96,7 @@ func (t *HTTPTTS) Synthesize(ctx context.Context, text string, opts ports.VoiceO
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNotFound {
-		return t.synthesizeAt(ctx, text, voice, format, speed, ".")
+		return t.synthesizeAt(ctx, text, voice, format, speed, "/")
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		raw, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))

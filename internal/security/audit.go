@@ -70,11 +70,12 @@ func (a *Auditor) write(ctx context.Context, evt domain.AuditEvent) {
 	}
 }
 
-// Stop flushes buffered events.
+// Stop flushes buffered events, even when Start was never called.
 func (a *Auditor) Stop(context.Context) {
 	a.once.Do(func() {
 		close(a.stop)
 		a.wg.Wait()
+		a.drain()
 	})
 }
 

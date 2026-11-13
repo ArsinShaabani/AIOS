@@ -99,7 +99,7 @@ deadlines everywhere, token-budgeted context, streaming, GOGC tuning.
 
 | Phase | Scope |
 |---|---|
-| 1.1 | Raise coverage to the 80% target; OpenAPI-generated client; SSE reconnect |
+| 1.1 | Keep coverage above 80% as the suite grows; OpenAPI-generated client; SSE reconnect |
 | 1.2 | Postgres/Redis integration test suites; queue visibility-timeout tests |
 | 1.3 | Plugin signing + WASM sandbox (wazero); marketplace manifest format |
 | 1.4 | Voice: openWakeWord adapter, Silero VAD, OPUS transport, per-user voices |
@@ -132,8 +132,8 @@ deadlines everywhere, token-budgeted context, streaming, GOGC tuning.
 - **Load:** `tests/load` drives a running instance with configurable concurrency,
   reports p50/p95/p99 and fails above a 5% error rate.
 - **Gates:** `make cover` (atomic, `-coverpkg`) and `scripts/coverage-gate.sh`.
-  Current measured total is ~44%; the gate enforces 35% while the documented
-  target remains **80%** (roadmap 1.1). We do not claim 80% prematurely.
+  Current measured total is **80.2%** with a de-duplicated merged profile; the
+  gate enforces **80% overall and 80% per core package**.
 
 ## 8. Configuration precedence
 

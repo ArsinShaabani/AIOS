@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 	"sync"
@@ -184,10 +183,4 @@ func (a *API) handleWSChat(w http.ResponseWriter, r *http.Request) {
 			_ = writer.json(map[string]any{"type": "error", "error": "unknown message type"})
 		}
 	}
-}
-
-// jsonMarshal is a small helper shared with the voice socket.
-func jsonMarshal(v any) []byte {
-	raw, _ := json.Marshal(v)
-	return raw
 }

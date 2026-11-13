@@ -64,8 +64,8 @@ func (r *Router) Embed(ctx context.Context, inputs []string) ([][]float32, error
 	}
 	release()
 	if err != nil {
-		if p2, name2 := r.embeddingFallback(); p2 != nil && name2 != providerName {
-			r.log.Warn("embedding provider failed, falling back", "provider", providerName, "error", err)
+		if p2, name2 := r.embeddingFallbackExcept(providerName); p2 != nil {
+			r.log.Warn("embedding provider failed, falling back", "provider", providerName, "fallback", name2, "error", err)
 			return r.embedWith(ctx, p2, name2, model, inputs)
 		}
 		return nil, err
@@ -104,7 +104,16 @@ func (r *Router) embedWith(ctx context.Context, p ports.Provider, name, model st
 }
 
 func (r *Router) embeddingFallback() (ports.Provider, string) {
+	return r.embeddingFallbackExcept("")
+}
+
+// embeddingFallbackExcept picks an embeddings-capable provider, skipping the one
+// that just failed.
+func (r *Router) embeddingFallbackExcept(exclude string) (ports.Provider, string) {
 	for _, name := range r.sortedProviders() {
+		if name == exclude {
+			continue
+		}
 		p := r.providers[name]
 		if p != nil && p.Capabilities().Embeddings {
 			return p, name
