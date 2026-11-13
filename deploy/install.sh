@@ -99,7 +99,8 @@ if ! id -u "$APP_USER" >/dev/null 2>&1; then
   fi
 fi
 install -d -m 0750 -o "$APP_USER" -g "$APP_USER" "$DATA_DIR"
-install -d -m 0750 "$CONF_DIR"
+# Config is owned by root but group-readable by the service user.
+install -d -m 0750 -o root -g "$APP_USER" "$CONF_DIR"
 port_busy() {
   if command -v ss >/dev/null; then
     ss -ltn 2>/dev/null | awk '{print $4}' | grep -q ":$1$"
@@ -287,11 +288,17 @@ rag:
 events:
   driver: memory
 YAML
-  chmod 0640 "$CONF_DIR/config.yaml"
+  log "wrote configuration"
 else
   log "keeping existing $CONF_DIR/config.yaml"
 fi
+# Always (re)apply ownership/permissions: the service runs as $APP_USER, so a
+# config left as root:root 0640 would make the daemon fail to start.
+chown root:"$APP_USER" "$CONF_DIR/config.yaml"
+chmod 0640 "$CONF_DIR/config.yaml"
 printf '%s\n' "$ADMIN_PASSWORD" > "$APASSWORD_FILE"
+chown root:root "$APASSWORD_FILE" 2>/dev/null || true
+chmod 0600 "$APASSWORD_FILE"
 if [[ $USE_SYSTEMD -eq 1 ]]; then
   log "installing systemd service"
   cat > "$SERVICE" <<UNIT
@@ -329,6 +336,13 @@ WantedBy=multi-user.target
 UNIT
   systemctl daemon-reload
   systemctl enable aios >/dev/null 2>&1 || true
+  # Preflight: the daemon must be able to read its config and data dir.
+  if command -v runuser >/dev/null; then
+    runuser -u "$APP_USER" -- test -r "$CONF_DIR/config.yaml" \
+      || die "service user $APP_USER cannot read $CONF_DIR/config.yaml (fix: chown root:$APP_USER and chmod 0640)"
+    runuser -u "$APP_USER" -- test -w "$DATA_DIR" \
+      || die "service user $APP_USER cannot write $DATA_DIR (fix: chown -R $APP_USER:$APP_USER $DATA_DIR)"
+  fi
   systemctl restart aios
   log "waiting for the service to become healthy"
   healthy=0
@@ -386,4 +400,3 @@ echo "  ollama pull qwen2.5:1.5b && \\"
 echo "  sed -i 's/^  default_provider: .*/  default_provider: ollama/' $CONF_DIR/config.yaml && \\"
 echo "  sed -i 's/^  default_model: .*/  default_model: qwen2.5:1.5b/' $CONF_DIR/config.yaml && \\"
 echo "  systemctl restart aios"
-chmod 0600 "$APASSWORD_FILE"
