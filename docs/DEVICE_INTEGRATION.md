@@ -190,6 +190,8 @@ Security and limits:
   `mqttbridge.rate_limited`, `chat.empty`, `llm.*`). Nothing sensitive is echoed.
 - Deploy with TLS (`tls://` or a local broker) because the API key travels in the
   payload; give the broker per-device ACLs and rotate keys.
-- The bridge runs in-process; with multiple AIOS replicas use shared subscriptions
-  or a per-replica topic prefix to avoid duplicate replies.
+- Set `mqtt.bridge.consumer_group` with multiple AIOS replicas (MQTT v5 shared
+  subscription) so each request is answered exactly once; alternatively give each
+  replica its own topic prefix. Without either, N replicas answer every request N
+  times.
 

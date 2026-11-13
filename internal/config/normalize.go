@@ -126,6 +126,9 @@ func (c *Config) Normalize() error {
 	if c.MQTT.Bridge.MaxConcurrency <= 0 {
 		c.MQTT.Bridge.MaxConcurrency = 4
 	}
+	if c.MQTT.Bridge.ConsumerGroup != "" {
+		c.MQTT.Bridge.ConsumerGroup = strings.Join(strings.Fields(c.MQTT.Bridge.ConsumerGroup), "-")
+	}
 	if c.MQTT.Bridge.RequestsPerMinute <= 0 {
 		c.MQTT.Bridge.RequestsPerMinute = 30
 	}

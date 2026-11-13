@@ -9,6 +9,31 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/config"
 )
 
+func TestRequestTopicConsumerGroup(t *testing.T) {
+	base := newBridgeEnv(t, nil)
+	cases := []struct{ group, want string }{
+		{"", "aios/bridge/chat"},
+		{"aios-core", "$share/aios-core/aios/bridge/chat"},
+	}
+	for _, c := range cases {
+		env := newBridgeEnv(t, func(cfg *config.MQTTConfig) { cfg.Bridge.ConsumerGroup = c.group })
+		if got := env.bridge.requestTopic(); got != c.want {
+			t.Fatalf("group %q: %s want %s", c.group, got, c.want)
+		}
+	}
+	if got := base.bridge.requestTopic(); got != "aios/bridge/chat" {
+		t.Fatalf("default: %s", got)
+	}
+	// Start must subscribe to the shared filter.
+	env := newBridgeEnv(t, func(cfg *config.MQTTConfig) { cfg.Bridge.ConsumerGroup = "grp" })
+	if err := env.bridge.Start(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if env.client.topic != "$share/grp/aios/bridge/chat" {
+		t.Fatalf("subscribed: %s", env.client.topic)
+	}
+}
+
 func TestReplyTopicRules(t *testing.T) {
 	e := newBridgeEnv(t, nil)
 	cases := []struct {

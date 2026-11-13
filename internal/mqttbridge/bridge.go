@@ -95,7 +95,7 @@ func (b *Bridge) Start(ctx context.Context) error {
 	if !b.cfg.Enabled || !b.cfg.Bridge.Enabled {
 		return nil
 	}
-	topic := b.cfg.Bridge.RequestTopic
+	topic := b.requestTopic()
 	if topic == "" {
 		return platform.Invalid("mqttbridge.topic", "bridge request topic is required")
 	}
@@ -140,6 +140,17 @@ func (b *Bridge) rejectBusy(ctx context.Context, payload []byte) {
 		req.ID = platform.NewID("mqtt")
 	}
 	b.reply(ctx, b.replyTopic(req), Response{ID: req.ID, Error: "bridge is busy", Code: "mqttbridge.busy", At: time.Now().UTC()})
+}
+
+// requestTopic returns the subscription filter. With a consumer group the bridge
+// subscribes to an MQTT v5 shared subscription, so N replicas load-balance
+// requests instead of answering each one N times.
+func (b *Bridge) requestTopic() string {
+	topic := b.cfg.Bridge.RequestTopic
+	if group := b.cfg.Bridge.ConsumerGroup; group != "" && topic != "" {
+		return "$share/" + group + "/" + topic
+	}
+	return topic
 }
 
 func (b *Bridge) replyTopic(req Request) string {

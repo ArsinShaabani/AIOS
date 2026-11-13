@@ -167,6 +167,9 @@ func (c *Config) Validate() error {
 		if c.MQTT.Bridge.MaxConcurrency < 1 || c.MQTT.Bridge.MaxConcurrency > 64 {
 			add("mqtt.bridge.max_concurrency must be within [1,64]")
 		}
+		if len(c.MQTT.Bridge.ConsumerGroup) > 64 || strings.ContainsAny(c.MQTT.Bridge.ConsumerGroup, "$+/# ") {
+			add("mqtt.bridge.consumer_group must be <= 64 chars without $ + / # or spaces")
+		}
 	}
 	if c.RAG.Enabled {
 		if c.RAG.MaxDocumentBytes < 1024 || c.RAG.MaxDocumentBytes > 32<<20 {

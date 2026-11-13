@@ -194,6 +194,7 @@ mqtt:
     max_message_bytes: 65536
     max_concurrency: 4
     requests_per_minute: 30
+    consumer_group: ""      # set for multi-replica: $share/<group>/<topic> (MQTT v5)
 
 home_assistant:
   enabled: false

@@ -22,6 +22,9 @@ type MQTTBridgeConfig struct {
 	MaxMessageBytes   int    `yaml:"max_message_bytes"`
 	MaxConcurrency    int    `yaml:"max_concurrency"`
 	RequestsPerMinute int    `yaml:"requests_per_minute"`
+	// ConsumerGroup uses an MQTT shared subscription ($share/<group>/<topic>)
+	// so only one AIOS replica answers each request. Requires MQTT v5.
+	ConsumerGroup string `yaml:"consumer_group"`
 }
 
 type HomeAssistantConfig struct {

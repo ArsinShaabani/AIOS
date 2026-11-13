@@ -52,6 +52,11 @@ func Connect(ctx context.Context, cfg config.MQTTConfig, log *slog.Logger) (*Cli
 	if cfg.Password != "" {
 		opts.SetPassword(cfg.Password)
 	}
+	// Shared subscriptions ($share/group/topic) require MQTT v5.
+	if cfg.Bridge.ConsumerGroup != "" {
+		opts.SetProtocolVersion(5)
+		opts.SetCleanSession(true)
+	}
 	c := &Client{cfg: cfg, log: log, subs: map[string]func(string, []byte){}}
 	opts.SetOnConnectHandler(func(pc paho.Client) {
 		c.log.Info("mqtt connected", "broker", cfg.Broker)
