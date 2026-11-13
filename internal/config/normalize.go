@@ -53,6 +53,14 @@ func (c *Config) Normalize() error {
 			}
 		}
 		p.BaseURL = strings.TrimRight(p.BaseURL, "/")
+		// Ollama exposes its OpenAI-compatible API under /v1 (chat, embeddings,
+		// models). Without this the OpenAI adapter would POST /chat/completions
+		// and Ollama answers 404.
+		if p.Kind == "ollama" && !strings.HasSuffix(p.BaseURL, "/v1") {
+			if !strings.Contains(p.BaseURL, "/v1/") {
+				p.BaseURL += "/v1"
+			}
+		}
 		if p.DefaultModel == "" && len(p.Models) > 0 {
 			p.DefaultModel = p.Models[0].Name
 		}
