@@ -106,6 +106,7 @@ type Overview struct {
 	Agents          int                `json:"agents"`
 	Plugins         int                `json:"plugins"`
 	Memories        int                `json:"memories"`
+	Documents       int                `json:"documents"`
 	PendingTasks    int                `json:"pending_tasks"`
 	AuditEvents     int                `json:"audit_events"`
 	UsageToday      domain.UsageTotals `json:"usage_today"`

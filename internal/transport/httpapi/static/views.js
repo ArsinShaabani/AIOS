@@ -50,6 +50,7 @@
       V._card("Sessions", o.sessions, (o.messages || 0) + " messages") +
       V._card("Devices", o.devices, ((o.devices_by_status && o.devices_by_status.online) || 0) + " online") +
       V._card("Memories", o.memories, "long-term + semantic") +
+      V._card("Documents", o.documents, "RAG chunks indexed") +
       "</div>" +
       '<div class="grid cols-4" style="margin-top:16px">' +
       V._card("Requests today", u.requests, (u.prompt_tokens || 0) + " in / " + (u.completion_tokens || 0) + " out") +

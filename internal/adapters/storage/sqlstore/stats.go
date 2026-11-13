@@ -26,6 +26,7 @@ func (r *StatsRepo) Overview(ctx context.Context) (ports.Overview, error) {
 		"SELECT COUNT(*) FROM agents":       &o.Agents,
 		"SELECT COUNT(*) FROM plugins":      &o.Plugins,
 		"SELECT COUNT(*) FROM memories":     &o.Memories,
+		"SELECT COUNT(*) FROM documents":    &o.Documents,
 		"SELECT COUNT(*) FROM audit_events": &o.AuditEvents,
 	}
 	for query, dest := range counts {

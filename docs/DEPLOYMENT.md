@@ -95,7 +95,7 @@ events.
 
 ## 7. Full stack (larger host)
 
-`deploy/docker-compose.full.yml` starts Postgres, Redis, Qdrant, Ollama,
+`deploy/docker-compose.full.yml` starts Postgres, Redis, NATS, Qdrant, Ollama,
 faster-whisper and a Wyoming Piper container, then wires AIOS to them:
 
 ```bash
