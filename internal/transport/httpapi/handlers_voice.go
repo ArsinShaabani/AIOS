@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"strings"
@@ -20,6 +21,54 @@ func (a *API) handleVoiceConfig(w http.ResponseWriter, r *http.Request) {
 		"wake_word": cfg.WakeWord, "vad": cfg.VAD,
 		"interruptions": cfg.Interruptions, "max_session": cfg.MaxSession,
 	})
+}
+
+func (a *API) voiceProfile(ctx context.Context, userID string) (voice.Profile, bool) {
+	defaults := voice.DefaultProfile(a.Config.Voice)
+	if a.VoiceProfiles == nil {
+		return defaults, false
+	}
+	stored, err := a.VoiceProfiles.Get(ctx, userID)
+	if err != nil || stored == nil {
+		return defaults, false
+	}
+	return stored.Normalize(a.Config.Voice), true
+}
+
+func (a *API) handleGetVoiceProfile(w http.ResponseWriter, r *http.Request) {
+	user := userFrom(r.Context())
+	profile, customised := a.voiceProfile(r.Context(), user.ID)
+	writeJSON(w, http.StatusOK, map[string]any{"profile": profile, "customised": customised})
+}
+
+func (a *API) handleSetVoiceProfile(w http.ResponseWriter, r *http.Request) {
+	var p voice.Profile
+	if err := decodeJSON(w, r, &p); err != nil {
+		a.fail(w, r, err)
+		return
+	}
+	if err := p.Validate(); err != nil {
+		a.fail(w, r, err)
+		return
+	}
+	user := userFrom(r.Context())
+	stored, err := a.VoiceProfiles.Set(r.Context(), user.ID, p)
+	if err != nil {
+		a.fail(w, r, err)
+		return
+	}
+	a.Auditor.Log(r.Context(), user.ID, "user", "voice.profile_update", "user", user.ID, "success",
+		clientIP(r), r.UserAgent(), map[string]any{"voice": stored.Voice, "language": stored.Language, "speed": stored.Speed})
+	writeJSON(w, http.StatusOK, map[string]any{"profile": stored.Normalize(a.Config.Voice), "customised": true})
+}
+
+func (a *API) handleDeleteVoiceProfile(w http.ResponseWriter, r *http.Request) {
+	user := userFrom(r.Context())
+	if err := a.VoiceProfiles.Delete(r.Context(), user.ID); err != nil {
+		a.fail(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (a *API) handleTranscribe(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +103,8 @@ func (a *API) handleTranscribe(w http.ResponseWriter, r *http.Request) {
 		audio.Data = voice.EncodeWAV(samples, a.Config.Voice.SampleRate)
 		audio.DurationMS = voice.DurationMS(len(samples), a.Config.Voice.SampleRate)
 	}
-	tr, err := a.Voice.Transcribe(r.Context(), audio)
+	profile, _ := a.voiceProfile(r.Context(), userFrom(r.Context()).ID)
+	tr, err := a.Voice.TranscribeLanguage(r.Context(), audio, profile.Language)
 	if err != nil {
 		a.fail(w, r, err)
 		return
@@ -86,7 +136,16 @@ func (a *API) handleSynthesize(w http.ResponseWriter, r *http.Request) {
 		a.fail(w, r, platform.Invalid("voice.text_long", "text must be under 4000 characters"))
 		return
 	}
-	audio, err := a.Voice.Synthesize(r.Context(), req.Text)
+	profile, _ := a.voiceProfile(r.Context(), userFrom(r.Context()).ID)
+	if req.Voice == "" {
+		req.Voice = profile.Voice
+	}
+	if req.Format == "" {
+		req.Format = profile.Format
+	}
+	audio, err := a.Voice.SynthesizeOptions(r.Context(), req.Text, ports.VoiceOptions{
+		Voice: req.Voice, Format: req.Format, Speed: profile.Speed,
+	})
 	if err != nil {
 		a.fail(w, r, err)
 		return

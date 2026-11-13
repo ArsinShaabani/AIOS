@@ -128,6 +128,18 @@ func (c *Config) Validate() error {
 		default:
 			add("voice.tts.format must be wav, mp3 or opus")
 		}
+		switch c.Voice.WakeWord.Provider {
+		case "", "text":
+		case "openwakeword_http":
+			if c.Voice.WakeWord.Endpoint == "" {
+				add("voice.wake_word.endpoint is required for openwakeword_http")
+			}
+		default:
+			add("voice.wake_word.provider must be text or openwakeword_http")
+		}
+		if c.Voice.WakeWord.Threshold < 0 || c.Voice.WakeWord.Threshold > 1 {
+			add("voice.wake_word.threshold must be within [0,1]")
+		}
 	}
 	switch c.Tools.SearchProvider {
 	case "searxng", "duckduckgo", "wikipedia", "mock":

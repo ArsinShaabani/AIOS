@@ -45,6 +45,12 @@ func (a *API) handleWSVoice(w http.ResponseWriter, r *http.Request) {
 	cfg := a.Config.Voice
 	sampleRate := cfg.SampleRate
 	detector := voice.NewDetector(cfg.VAD, sampleRate)
+	profile := voice.DefaultProfile(cfg)
+	if a.VoiceProfiles != nil {
+		if stored, err := a.VoiceProfiles.Get(r.Context(), user.ID); err == nil && stored != nil {
+			profile = stored.Normalize(cfg)
+		}
+	}
 
 	var (
 		mu      sync.Mutex
@@ -109,7 +115,9 @@ func (a *API) handleWSVoice(w http.ResponseWriter, r *http.Request) {
 				return
 			default:
 			}
-			audio, err := a.Voice.Synthesize(ctx, chunk)
+			audio, err := a.Voice.SynthesizeOptions(ctx, chunk, ports.VoiceOptions{
+				Voice: profile.Voice, Format: profile.Format, Speed: profile.Speed,
+			})
 			if err != nil {
 				_ = writer.json(map[string]any{"type": "error", "stage": "tts", "error": platform.AsError(err).Message})
 				return
@@ -129,7 +137,19 @@ func (a *API) handleWSVoice(w http.ResponseWriter, r *http.Request) {
 			Data: voice.EncodeWAV(pcm, sampleRate), Format: "wav", SampleRate: sampleRate,
 			DurationMS: voice.DurationMS(len(pcm), sampleRate),
 		}
-		tr, err := a.Voice.Transcribe(ctx, audio)
+		audioWake := a.Voice.AudioWakeEnabled()
+		if audioWake {
+			activated, wakeErr := a.Voice.DetectWakeWord(ctx, audio)
+			if wakeErr != nil {
+				_ = writer.json(map[string]any{"type": "error", "stage": "wake", "error": platform.AsError(wakeErr).Message})
+				return
+			}
+			if !activated {
+				_ = writer.json(map[string]any{"type": "wake_needed"})
+				return
+			}
+		}
+		tr, err := a.Voice.TranscribeLanguage(ctx, audio, profile.Language)
 		if err != nil {
 			_ = writer.json(map[string]any{"type": "error", "stage": "stt", "error": platform.AsError(err).Message})
 			return
@@ -137,7 +157,17 @@ func (a *API) handleWSVoice(w http.ResponseWriter, r *http.Request) {
 		if tr.Text == "" {
 			return
 		}
-		activated, command := a.Voice.WakeWord(tr.Text)
+		var activated bool
+		var command string
+		if audioWake {
+			activated = true
+			command = a.Voice.StripWakeWord(tr.Text)
+			if command == "" {
+				command = tr.Text
+			}
+		} else {
+			activated, command = a.Voice.WakeWord(tr.Text)
+		}
 		_ = writer.json(map[string]any{"type": "transcript", "text": tr.Text, "language": tr.Language, "wake": activated})
 		if !activated || command == "" {
 			_ = writer.json(map[string]any{"type": "wake_needed"})

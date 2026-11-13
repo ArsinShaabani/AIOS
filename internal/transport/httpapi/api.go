@@ -31,29 +31,30 @@ var staticFS embed.FS
 
 // API is the HTTP composition root.
 type API struct {
-	Config       config.Config
-	Repos        *sqlstore.Repositories
-	Auth         *security.TokenService
-	Auditor      *security.Auditor
-	Secrets      *security.Secrets
-	Brain        *brain.Engine
-	Memory       *memory.Service
-	Devices      *devices.Service
-	Personality  *personality.Engine
-	Agents       *agents.Registry
-	Plugins      *plugins.Host
-	Scheduler    *scheduler.Service
-	Router       ports.ModelRouter
-	Voice        *voice.Service
-	Queue        ports.Queue
-	Metrics      *observability.Metrics
-	System       *observability.SystemMonitor
-	Health       *observability.Health
-	Bus          ports.EventBus
-	Log          *slog.Logger
-	Version      string
-	LoginLimiter *security.RateLimiter
-	Limiter      *security.RateLimiter
+	Config        config.Config
+	Repos         *sqlstore.Repositories
+	Auth          *security.TokenService
+	Auditor       *security.Auditor
+	Secrets       *security.Secrets
+	Brain         *brain.Engine
+	Memory        *memory.Service
+	Devices       *devices.Service
+	Personality   *personality.Engine
+	Agents        *agents.Registry
+	Plugins       *plugins.Host
+	Scheduler     *scheduler.Service
+	Router        ports.ModelRouter
+	Voice         *voice.Service
+	VoiceProfiles *voice.ProfileStore
+	Queue         ports.Queue
+	Metrics       *observability.Metrics
+	System        *observability.SystemMonitor
+	Health        *observability.Health
+	Bus           ports.EventBus
+	Log           *slog.Logger
+	Version       string
+	LoginLimiter  *security.RateLimiter
+	Limiter       *security.RateLimiter
 
 	gqlOnce   sync.Once
 	gqlSchema graphql.Schema

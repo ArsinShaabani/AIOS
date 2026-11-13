@@ -77,8 +77,9 @@ func (a *App) initAPI() error {
 		Agents: a.Agents, Plugins: a.Plugins, Scheduler: a.Scheduler, Router: a.Router,
 		Voice: a.Voice, Queue: a.Queue, Metrics: a.Metrics, System: a.System, Health: a.Health,
 		Bus: a.Bus, Log: a.Log, Version: a.Version,
-		Limiter:      security.NewRateLimiter(a.Config.Server.RateLimit.RequestsPerMinute, a.Config.Server.RateLimit.Burst),
-		LoginLimiter: security.NewRateLimiter(a.Config.Server.RateLimit.AuthPerMinute, max(a.Config.Server.RateLimit.AuthPerMinute, 5)),
+		VoiceProfiles: voice.NewProfileStore(a.Repos.Settings),
+		Limiter:       security.NewRateLimiter(a.Config.Server.RateLimit.RequestsPerMinute, a.Config.Server.RateLimit.Burst),
+		LoginLimiter:  security.NewRateLimiter(a.Config.Server.RateLimit.AuthPerMinute, max(a.Config.Server.RateLimit.AuthPerMinute, 5)),
 	}
 	if !a.Config.Server.RateLimit.Enabled {
 		a.API.Limiter = nil

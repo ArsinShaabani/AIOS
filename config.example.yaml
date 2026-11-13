@@ -172,8 +172,10 @@ voice:
   wake_word:
     enabled: false
     words: ["hey aios", "ok aios"]
-    provider: text
-    endpoint: ""
+    provider: text             # text | openwakeword_http
+    endpoint: ""               # POST bridge for openwakeword_http
+    threshold: 0.5
+    timeout: 2s
 
 mqtt:
   enabled: false

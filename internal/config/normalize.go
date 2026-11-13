@@ -102,5 +102,14 @@ func (c *Config) Normalize() error {
 	if c.Observability.SystemStatsEvery <= 0 {
 		c.Observability.SystemStatsEvery = Duration(30 * time.Second)
 	}
+	if c.Voice.WakeWord.Threshold <= 0 {
+		c.Voice.WakeWord.Threshold = 0.5
+	}
+	if c.Voice.WakeWord.Timeout <= 0 {
+		c.Voice.WakeWord.Timeout = Duration(2 * time.Second)
+	}
+	if c.Voice.WakeWord.Provider == "" {
+		c.Voice.WakeWord.Provider = "text"
+	}
 	return nil
 }

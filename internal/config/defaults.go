@@ -116,9 +116,11 @@ func Default() Config {
 				Adaptive:        true,
 			},
 			WakeWord: WakeWordConfig{
-				Enabled:  false,
-				Words:    []string{"hey aios", "ok aios"},
-				Provider: "text",
+				Enabled:   false,
+				Words:     []string{"hey aios", "ok aios"},
+				Provider:  "text",
+				Threshold: 0.5,
+				Timeout:   Duration(2e9),
 			},
 		},
 		MQTT: MQTTConfig{

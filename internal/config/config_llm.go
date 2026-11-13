@@ -124,8 +124,10 @@ type VADConfig struct {
 }
 
 type WakeWordConfig struct {
-	Enabled  bool     `yaml:"enabled"`
-	Words    []string `yaml:"words"`
-	Provider string   `yaml:"provider"` // text | openwakeword_http
-	Endpoint string   `yaml:"endpoint"`
+	Enabled   bool     `yaml:"enabled"`
+	Words     []string `yaml:"words"`
+	Provider  string   `yaml:"provider"` // text | openwakeword_http
+	Endpoint  string   `yaml:"endpoint"`
+	Threshold float64  `yaml:"threshold"` // openwakeword activation score
+	Timeout   Duration `yaml:"timeout"`
 }

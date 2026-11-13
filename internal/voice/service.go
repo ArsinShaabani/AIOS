@@ -42,12 +42,20 @@ func (s *Service) TTS() ports.TTS { return s.tts }
 // Config exposes the voice configuration.
 func (s *Service) Config() config.VoiceConfig { return s.cfg }
 
-// Transcribe converts audio to text.
+// Transcribe converts audio to text using the configured language.
 func (s *Service) Transcribe(ctx context.Context, audio ports.Audio) (ports.Transcript, error) {
+	return s.TranscribeLanguage(ctx, audio, s.cfg.STT.Language)
+}
+
+// TranscribeLanguage converts audio to text with an explicit language override
+// (per-user voice profile).
+func (s *Service) TranscribeLanguage(ctx context.Context, audio ports.Audio, language string) (ports.Transcript, error) {
 	if s.stt == nil {
 		return ports.Transcript{}, platform.Unavailable("voice.disabled", "voice is disabled")
 	}
-	language := s.cfg.STT.Language
+	if language == "" {
+		language = s.cfg.STT.Language
+	}
 	tr, err := s.stt.Transcribe(ctx, audio, language)
 	if err != nil {
 		return tr, err
@@ -60,9 +68,16 @@ func (s *Service) Transcribe(ctx context.Context, audio ports.Audio) (ports.Tran
 	return tr, nil
 }
 
-// Synthesize converts a reply into speakable audio. Markdown is stripped because
-// reading asterisks and code fences aloud is unpleasant.
+// Synthesize converts a reply into speakable audio using deployment defaults.
 func (s *Service) Synthesize(ctx context.Context, text string) (ports.Audio, error) {
+	return s.SynthesizeOptions(ctx, text, ports.VoiceOptions{
+		Voice: s.cfg.TTS.Voice, Format: s.cfg.TTS.Format, Speed: s.cfg.TTS.Speed,
+	})
+}
+
+// SynthesizeOptions converts a reply using an explicit voice profile. Markdown is
+// stripped because reading asterisks and code fences aloud is unpleasant.
+func (s *Service) SynthesizeOptions(ctx context.Context, text string, opts ports.VoiceOptions) (ports.Audio, error) {
 	if s.tts == nil {
 		return ports.Audio{}, platform.Unavailable("voice.disabled", "voice is disabled")
 	}
@@ -70,9 +85,16 @@ func (s *Service) Synthesize(ctx context.Context, text string) (ports.Audio, err
 	if speakable == "" {
 		speakable = "I don't have anything to say."
 	}
-	return s.tts.Synthesize(ctx, speakable, ports.VoiceOptions{
-		Voice: s.cfg.TTS.Voice, Format: s.cfg.TTS.Format, Speed: s.cfg.TTS.Speed,
-	})
+	if opts.Voice == "" {
+		opts.Voice = s.cfg.TTS.Voice
+	}
+	if opts.Format == "" {
+		opts.Format = s.cfg.TTS.Format
+	}
+	if opts.Speed <= 0 {
+		opts.Speed = s.cfg.TTS.Speed
+	}
+	return s.tts.Synthesize(ctx, speakable, opts)
 }
 
 // WakeWord checks a transcript against the configured wake words. When wake

@@ -118,7 +118,55 @@ Markdown, code fences and URLs are stripped before synthesis (`Speakable`).
 Budgets on a Pi: STT 1.5–4 s for a 5 s utterance with a small model; TTS
 150–400 ms per sentence; brain latency depends on the model.
 
-## 7. Privacy
+## 7. Wake words and per-user voices
+
+### Text vs audio wake detection
+
+`voice.wake_word.provider` selects where detection happens:
+
+| Provider | Behaviour |
+|---|---|
+| `text` | The transcript is matched against `words`; the wake word is stripped before the brain sees it. Zero extra models, works everywhere. |
+| `openwakeword_http` | Each finished utterance is scored **before** STT by POSTing `{"audio":"<base64 wav>","words":[...]}` to `endpoint`. The response is `{"score":0.0..1.0,"word":"hey aios"}`; `threshold` (default 0.5) gates activation. This avoids paying for STT on background speech. |
+
+The bridge keeps the heavy model out of the AIOS process; run openWakeWord in a
+small Python container (or any service implementing the contract) and set:
+
+```yaml
+voice:
+  wake_word:
+    enabled: true
+    provider: openwakeword_http
+    endpoint: http://127.0.0.1:9100/wake
+    words: ["hey aios"]
+    threshold: 0.55
+    timeout: 2s
+```
+
+If the detector is unreachable the realtime socket reports
+`{"type":"error","stage":"wake"}` and refuses to activate (fail closed).
+
+### Per-user voice profiles
+
+Each user can choose a voice, language, format and speed without touching the
+deployment defaults:
+
+```bash
+curl -s http://localhost:8080/api/v1/voice/profile -H "Authorization: Bearer $TOKEN"
+curl -s -X PUT http://localhost:8080/api/v1/voice/profile \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"voice":"fa_IR-amir","language":"fa","format":"wav","speed":1.15}'
+```
+
+The profile is stored as encrypted-at-scope user settings (`voice.profile`),
+validated (`format` wav/mp3/opus, `speed` 0.5–2), and applied to REST synthesis,
+transcription language and the WebSocket conversation loop. `DELETE` resets to
+the deployment defaults. Invalid or corrupt stored profiles are ignored rather
+than breaking voice.
+
+
+
+## 8. Privacy
 
 Audio stays in your infrastructure unless you choose a cloud provider. It is
 processed in memory and not persisted; transcripts become normal chat messages and
