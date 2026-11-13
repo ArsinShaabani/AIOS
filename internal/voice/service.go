@@ -16,10 +16,11 @@ var urlPattern = regexp.MustCompile(`https?://\S+`)
 
 // Service exposes speech-to-text, text-to-speech and wake-word handling.
 type Service struct {
-	cfg config.VoiceConfig
-	stt ports.STT
-	tts ports.TTS
-	log *slog.Logger
+	cfg    config.VoiceConfig
+	stt    ports.STT
+	tts    ports.TTS
+	silero *SileroHTTP
+	log    *slog.Logger
 }
 
 // NewService builds the voice service.

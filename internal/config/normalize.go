@@ -108,6 +108,15 @@ func (c *Config) Normalize() error {
 	if c.Voice.WakeWord.Timeout <= 0 {
 		c.Voice.WakeWord.Timeout = Duration(2 * time.Second)
 	}
+	if c.Voice.VAD.Provider == "" {
+		c.Voice.VAD.Provider = "energy"
+	}
+	if c.Voice.VAD.Threshold <= 0 {
+		c.Voice.VAD.Threshold = 0.5
+	}
+	if c.Voice.VAD.Timeout <= 0 {
+		c.Voice.VAD.Timeout = Duration(2 * time.Second)
+	}
 	if c.Voice.WakeWord.Provider == "" {
 		c.Voice.WakeWord.Provider = "text"
 	}

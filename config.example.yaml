@@ -163,6 +163,10 @@ voice:
     speed: 1.0
     timeout: 60s
   vad:
+    provider: energy          # energy | silero_http
+    endpoint: ""              # POST bridge for silero_http
+    threshold: 0.5
+    timeout: 2s
     energy_threshold: 0.02
     frame_ms: 20
     silence_ms: 700

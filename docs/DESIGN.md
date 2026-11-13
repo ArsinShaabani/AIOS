@@ -102,7 +102,7 @@ deadlines everywhere, token-budgeted context, streaming, GOGC tuning.
 | 1.1 | Keep coverage above 80% as the suite grows; OpenAPI-generated client; SSE reconnect |
 | 1.2 | ✅ Postgres/Redis integration suites; queue visibility timeout + stale-task reclaim |
 | 1.3 | ✅ Ed25519 plugin signing + WASM sandbox (wazero) + marketplace manifest |
-| 1.4 | ✅ openWakeWord adapter + per-user voice profiles; Silero VAD and OPUS next |
+| 1.4 | ✅ openWakeWord, Silero VAD bridge, per-user voice profiles; OPUS next |
 | 1.5 | ✅ Authenticated MQTT chat bridge + real-broker tests; multi-instance sessions next |
 | 1.6 | ✅ Document RAG (text/HTML/PDF ingest, chunk+embed, citations UI); OCR next |
 | 2.0 | ✅ NATS event bus + cross-replica WebSocket fan-out and MQTT shared subs; service extraction next |

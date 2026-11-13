@@ -137,6 +137,10 @@ func (a *API) handleWSVoice(w http.ResponseWriter, r *http.Request) {
 			Data: voice.EncodeWAV(pcm, sampleRate), Format: "wav", SampleRate: sampleRate,
 			DurationMS: voice.DurationMS(len(pcm), sampleRate),
 		}
+		if !a.Voice.ConfirmSpeech(ctx, audio) {
+			_ = writer.json(map[string]any{"type": "speech_rejected", "stage": "vad"})
+			return
+		}
 		audioWake := a.Voice.AudioWakeEnabled()
 		if audioWake {
 			activated, wakeErr := a.Voice.DetectWakeWord(ctx, audio)

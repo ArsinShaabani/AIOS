@@ -115,12 +115,18 @@ type TTSConfig struct {
 }
 
 type VADConfig struct {
-	EnergyThreshold float64 `yaml:"energy_threshold"`
-	FrameMS         int     `yaml:"frame_ms"`
-	SilenceMS       int     `yaml:"silence_ms"`
-	MinSpeechMS     int     `yaml:"min_speech_ms"`
-	MaxUtteranceMS  int     `yaml:"max_utterance_ms"`
-	Adaptive        bool    `yaml:"adaptive"`
+	// Provider selects the speech detector: energy (built-in) or silero_http
+	// (Silero VAD behind an HTTP bridge, keeps the core cgo-free).
+	Provider        string   `yaml:"provider"`
+	Endpoint        string   `yaml:"endpoint"`
+	Threshold       float64  `yaml:"threshold"` // silero speech probability
+	EnergyThreshold float64  `yaml:"energy_threshold"`
+	FrameMS         int      `yaml:"frame_ms"`
+	SilenceMS       int      `yaml:"silence_ms"`
+	MinSpeechMS     int      `yaml:"min_speech_ms"`
+	MaxUtteranceMS  int      `yaml:"max_utterance_ms"`
+	Adaptive        bool     `yaml:"adaptive"`
+	Timeout         Duration `yaml:"timeout"`
 }
 
 type WakeWordConfig struct {

@@ -118,7 +118,26 @@ Markdown, code fences and URLs are stripped before synthesis (`Speakable`).
 Budgets on a Pi: STT 1.5–4 s for a 5 s utterance with a small model; TTS
 150–400 ms per sentence; brain latency depends on the model.
 
-## 7. Wake words and per-user voices
+## 7. Neural VAD (Silero)
+
+The energy VAD drives streaming barge-in cheaply; a neural detector can confirm
+the final decision. Silero runs behind an HTTP bridge so the core stays cgo-free:
+
+```yaml
+voice:
+  vad:
+    provider: silero_http
+    endpoint: http://127.0.0.1:9100/vad
+    threshold: 0.55
+    timeout: 2s
+```
+
+Contract: `POST {"audio":"<base64 wav>","sample_rate":16000}` returns
+`{"speech":0.0..1.0}`. Utterances below `threshold` are rejected with a
+`speech_rejected` event; if the bridge is unreachable the energy decision is kept
+(fail-open) so a turn is never lost.
+
+## 8. Wake words and per-user voices
 
 ### Text vs audio wake detection
 
@@ -166,7 +185,7 @@ than breaking voice.
 
 
 
-## 8. Privacy
+## 9. Privacy
 
 Audio stays in your infrastructure unless you choose a cloud provider. It is
 processed in memory and not persisted; transcripts become normal chat messages and

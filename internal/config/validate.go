@@ -128,6 +128,18 @@ func (c *Config) Validate() error {
 		default:
 			add("voice.tts.format must be wav, mp3 or opus")
 		}
+		switch c.Voice.VAD.Provider {
+		case "", "energy":
+		case "silero_http":
+			if c.Voice.VAD.Endpoint == "" {
+				add("voice.vad.endpoint is required for silero_http")
+			}
+		default:
+			add("voice.vad.provider must be energy or silero_http")
+		}
+		if c.Voice.VAD.Threshold < 0 || c.Voice.VAD.Threshold > 1 {
+			add("voice.vad.threshold must be within [0,1]")
+		}
 		switch c.Voice.WakeWord.Provider {
 		case "", "text":
 		case "openwakeword_http":

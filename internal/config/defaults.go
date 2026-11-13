@@ -108,6 +108,9 @@ func Default() Config {
 				Timeout:  Duration(60e9),
 			},
 			VAD: VADConfig{
+				Provider:        "energy",
+				Threshold:       0.5,
+				Timeout:         Duration(2e9),
 				EnergyThreshold: 0.02,
 				FrameMS:         20,
 				SilenceMS:       700,
