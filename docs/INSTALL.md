@@ -58,7 +58,31 @@ journalctl -u aios -f
 4. Optional engines (voice, NATS, Redis, Qdrant, Postgres) live in
    `deploy/docker-compose.full.yml`.
 
-## Behind nginx (TLS)
+## Publish behind nginx (script)
+
+`deploy/setup-nginx.sh` writes a working vhost, chooses a certificate that
+exists, wires the WebSocket/SSE locations and aligns `public_url` /
+`cors_origins` in the AIOS config.
+
+```bash
+# real domain (Cloudflare or direct) — requests a certbot certificate
+sudo bash setup-nginx.sh --domain aios.example.com
+
+# no domain yet: self-signed certificate for the server IP
+sudo bash setup-nginx.sh --ip --default-server
+```
+
+Then AIOS answers on `https://<domain-or-ip>/`. Notes:
+
+- `--ip` produces a self-signed certificate: the browser warns once. A domain is
+  the only way to get a warning-free HTTPS URL.
+- `--default-server` makes this vhost answer for bare IPs; omit it when another
+  site already owns `default_server`.
+- The script refuses to use a certificate for a different hostname, backs up the
+  previous vhost, and only reloads nginx when `nginx -t` passes.
+- Cloudflare: keep the proxy ON, SSL mode **Full (strict)**, WebSockets enabled.
+
+## Behind nginx (manual configuration)
 
 The dashboard uses absolute asset paths, so serve it on its **own hostname**
 rather than a sub-path:
