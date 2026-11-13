@@ -22,3 +22,5 @@ coverage-e2e.out
 .DS_Store
 .idea/
 .vscode/
+/dist/
+.deploy/

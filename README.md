@@ -30,7 +30,17 @@ personality, voice, devices, plugins and an admin dashboard in a single Go binar
 - **Runs alone.** Dashboard, OpenAPI spec and GraphQL playground are embedded in
   the binary — no npm build step, no CDN, no external service required.
 
-## Quick start
+## Install on a server (one command)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ArsinShaabani/AIOS/main/deploy/install.sh \
+  | sudo bash -s -- --admin-password 'Choose-A-Strong-Password'
+```
+
+Installs a static binary, hardened systemd service, production config and the
+admin dashboard on `http://<server>:8080`. See [docs/INSTALL.md](docs/INSTALL.md).
+
+## Quick start from source
 
 ```bash
 git clone https://github.com/ArsinShaabani/AIOS.git && cd AIOS
