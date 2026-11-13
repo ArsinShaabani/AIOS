@@ -105,7 +105,7 @@ deadlines everywhere, token-budgeted context, streaming, GOGC tuning.
 | 1.4 | ✅ openWakeWord adapter + per-user voice profiles; Silero VAD and OPUS next |
 | 1.5 | ✅ Authenticated MQTT chat bridge + real-broker tests; multi-instance sessions next |
 | 1.6 | ✅ Document RAG (text/HTML/PDF ingest, chunk+embed, citations UI); OCR next |
-| 2.0 | ✅ NATS event bus behind the existing port; incremental Gateway/Brain/Voice extraction next |
+| 2.0 | ✅ NATS event bus + cross-replica WebSocket fan-out and MQTT shared subs; service extraction next |
 
 ## 6. Risk register
 

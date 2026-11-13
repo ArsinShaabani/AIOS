@@ -135,7 +135,8 @@ func (e *Engine) runTurn(ctx context.Context, st turnState) (*ChatOutput, error)
 	}
 	if e.Events != nil {
 		e.Events.Publish(ctx, ports.Event{Name: "chat.completed", UserID: st.user.ID, SessionID: st.session.ID,
-			Payload: map[string]any{"agent": st.agent.ID, "intent": st.intent.Name, "tokens": usage.TotalTokens}})
+			Payload: map[string]any{"agent": st.agent.ID, "intent": st.intent.Name,
+				"tokens": usage.TotalTokens, "origin": platform.InstanceID()}})
 	}
 	e.enqueueExtraction(ctx, st.user.ID, st.session.ID, st.input.Message, finalContent.String())
 	return out, nil

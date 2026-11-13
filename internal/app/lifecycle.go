@@ -14,6 +14,7 @@ func (a *App) Start(ctx context.Context) error {
 	a.cancel = cancel
 
 	a.Bus.Start(ctx)
+	a.API.HubStart(ctx)
 	a.Usage.Start(ctx)
 	a.Auditor.Start(ctx)
 	if err := a.Seed(ctx); err != nil {

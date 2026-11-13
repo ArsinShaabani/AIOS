@@ -81,6 +81,7 @@ func (a *App) initAPI() error {
 		Voice: a.Voice, Queue: a.Queue, Metrics: a.Metrics, System: a.System, Health: a.Health,
 		Bus: a.Bus, Log: a.Log, Version: a.Version,
 		VoiceProfiles: voice.NewProfileStore(a.Repos.Settings),
+		Hub:           httpapi.NewHub(),
 		Limiter:       security.NewRateLimiter(a.Config.Server.RateLimit.RequestsPerMinute, a.Config.Server.RateLimit.Burst),
 		LoginLimiter:  security.NewRateLimiter(a.Config.Server.RateLimit.AuthPerMinute, max(a.Config.Server.RateLimit.AuthPerMinute, 5)),
 	}

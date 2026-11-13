@@ -115,6 +115,8 @@ func (a *API) handleWSChat(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 	writer := &wsWriter{conn: conn}
+	a.Hub.Register(writer, "")
+	defer a.Hub.Unregister(writer)
 	_ = writer.json(map[string]any{"type": "ready", "user_id": principal.UserID, "version": a.Version})
 
 	var (
@@ -173,6 +175,9 @@ func (a *API) handleWSChat(w http.ResponseWriter, r *http.Request) {
 					Channel: domain.ChannelWeb, Stream: true,
 				}
 				_, err := a.Brain.Chat(ctx, input, func(ev brain.Event) error {
+					if ev.Type == "session" && ev.SessionID != "" {
+						a.Hub.Bind(writer, ev.SessionID)
+					}
 					return writer.json(ev)
 				})
 				if err != nil {

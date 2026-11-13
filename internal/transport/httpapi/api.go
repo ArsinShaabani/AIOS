@@ -55,6 +55,7 @@ type API struct {
 	Bus           ports.EventBus
 	Log           *slog.Logger
 	Version       string
+	Hub           *Hub
 	LoginLimiter  *security.RateLimiter
 	Limiter       *security.RateLimiter
 
