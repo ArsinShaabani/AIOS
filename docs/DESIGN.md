@@ -132,7 +132,7 @@ deadlines everywhere, token-budgeted context, streaming, GOGC tuning.
 - **Load:** `tests/load` drives a running instance with configurable concurrency,
   reports p50/p95/p99 and fails above a 5% error rate.
 - **Gates:** `make cover` (atomic, `-coverpkg`) and `scripts/coverage-gate.sh`.
-  Current measured total is **80.7%** with a de-duplicated merged profile; the
+  Current measured total is **80.8%** with a de-duplicated merged profile; the
   gate enforces **80% overall and 80% per core package**.
 
 ## 8. Configuration precedence
