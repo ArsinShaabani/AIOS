@@ -1,0 +1,176 @@
+package config
+
+// Default returns a configuration tuned for 1 CPU / 1 GB RAM edge hardware.
+// Every default is intentionally conservative: small queues, few workers and
+// bounded caches keep the process well below the memory budget.
+func Default() Config {
+	return Config{
+		App: AppConfig{
+			Name:      "AIOS",
+			Env:       "development",
+			DataDir:   "./data",
+			LogLevel:  "info",
+			LogFormat: "json",
+		},
+		Server: ServerConfig{
+			Addr:            "127.0.0.1:8080",
+			ReadTimeout:     Duration(15e9),
+			WriteTimeout:    Duration(90e9),
+			IdleTimeout:     Duration(120e9),
+			ShutdownTimeout: Duration(20e9),
+			MaxBodyBytes:    1 << 20,
+			CORSOrigins:     []string{"*"},
+			EnableGraphQL:   true,
+			RateLimit: RateLimitConfig{
+				Enabled:           true,
+				RequestsPerMinute: 120,
+				Burst:             40,
+				AuthPerMinute:     10,
+			},
+		},
+		Database: DatabaseConfig{
+			Driver:          "sqlite",
+			DSN:             "aios.db",
+			MaxOpenConns:    4,
+			MaxIdleConns:    2,
+			ConnMaxLifetime: Duration(3600e9),
+			AutoMigrate:     true,
+			Seed:            true,
+		},
+		Cache: CacheConfig{
+			Driver:     "memory",
+			MaxEntries: 10000,
+			DefaultTTL: Duration(300e9),
+			Prefix:     "aios",
+			Redis:      RedisConfig{Addr: "127.0.0.1:6379", PoolSize: 4},
+		},
+		Queue: QueueConfig{
+			Driver:            "memory",
+			Workers:           2,
+			MaxAttempts:       3,
+			VisibilityTimeout: Duration(60e9),
+			PollInterval:      Duration(500e6),
+		},
+		Vector: VectorConfig{
+			Driver:     "local",
+			Collection: "aios_memories",
+			Dim:        384,
+			Timeout:    Duration(5e9),
+		},
+		Security: SecurityConfig{
+			Issuer:           "aios",
+			AccessTTL:        Duration(900e9),
+			RefreshTTL:       Duration(720 * 3600e9),
+			DeviceTokenTTL:   Duration(8760 * 3600e9),
+			AllowedClockSkew: Duration(30e9),
+			BcryptCost:       10,
+			MaxLoginAttempts: 8,
+			LockoutDuration:  Duration(900e9),
+			Bootstrap: BootstrapUser{
+				Email: "admin@aios.local",
+				Name:  "Administrator",
+			},
+			AutoGenerateKeys: true,
+		},
+		LLM: LLMConfig{
+			DefaultProvider:   "local",
+			DefaultModel:      "local-template",
+			EmbeddingProvider: "local",
+			EmbeddingModel:    "hash-384",
+			Timeout:           Duration(120e9),
+			MaxRetries:        2,
+			MaxToolIterations: 4,
+			MaxConcurrency:    2,
+			Temperature:       0.7,
+			TopP:              0.9,
+			MaxTokens:         1024,
+			SystemPrompt:      defaultSystemPrompt,
+			Providers:         defaultProviders(),
+			Routing:           defaultRouting(),
+		},
+		Voice: VoiceConfig{
+			Enabled:       true,
+			MaxSession:    Duration(1800e9),
+			SampleRate:    16000,
+			Interruptions: true,
+			STT: STTConfig{
+				Provider: "whisper_http",
+				BaseURL:  "http://127.0.0.1:8000/v1",
+				Model:    "whisper-1",
+				Timeout:  Duration(60e9),
+			},
+			TTS: TTSConfig{
+				Provider: "piper_http",
+				BaseURL:  "http://127.0.0.1:5000",
+				Voice:    "en_US-lessac-medium",
+				Format:   "wav",
+				Speed:    1.0,
+				Timeout:  Duration(60e9),
+			},
+			VAD: VADConfig{
+				EnergyThreshold: 0.02,
+				FrameMS:         20,
+				SilenceMS:       700,
+				MinSpeechMS:     200,
+				MaxUtteranceMS:  30000,
+				Adaptive:        true,
+			},
+			WakeWord: WakeWordConfig{
+				Enabled:  false,
+				Words:    []string{"hey aios", "ok aios"},
+				Provider: "text",
+			},
+		},
+		MQTT: MQTTConfig{
+			Enabled:       false,
+			Broker:        "tcp://127.0.0.1:1883",
+			ClientID:      "aios-core",
+			TopicPrefix:   "aios",
+			QoS:           1,
+			KeepAlive:     30,
+			AutoDiscovery: true,
+		},
+		HomeAssistant: HomeAssistantConfig{Timeout: Duration(10e9)},
+		Plugins: PluginConfig{
+			Enabled:          true,
+			Dir:              "./plugins",
+			AllowHTTP:        true,
+			Timeout:          Duration(20e9),
+			MaxResponseBytes: 512 << 10,
+		},
+		Memory: MemoryConfig{
+			MaxShortTurns:    20,
+			LongTermEnabled:  true,
+			SemanticEnabled:  true,
+			ConsolidateEvery: 10,
+			SummarizeAfter:   40,
+			MaxPerUser:       5000,
+			RetrievalTopK:    5,
+			MinSimilarity:    0.25,
+			MaxContextTokens: 3000,
+		},
+		Observability: ObservabilityConfig{
+			MetricsEnabled:   true,
+			SystemStatsEvery: Duration(30e9),
+		},
+		Scheduler: SchedulerConfig{
+			Enabled:       true,
+			PollInterval:  Duration(5e9),
+			MaxConcurrent: 2,
+			Timezone:      "UTC",
+		},
+		Tools: ToolsConfig{
+			InternetEnabled:  true,
+			SearchProvider:   "duckduckgo",
+			HTTPTimeout:      Duration(15e9),
+			MaxFetchBytes:    2 << 20,
+			MaxSearchResults: 6,
+			UserAgent:        "AIOS/1.0 (+https://github.com/ArsinShaabani/AIOS)",
+			BlockPrivateIPs:  true,
+		},
+	}
+}
+
+const defaultSystemPrompt = `You are AIOS, a local-first personal AI operating system.
+Be accurate and concise. Prefer using tools over guessing. If a tool fails, explain the failure plainly.
+Never invent device states, sensor values or search results. Answer in the user's language.`

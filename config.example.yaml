@@ -1,0 +1,235 @@
+# AIOS configuration — copy to config.yaml and edit.
+# Every value can be overridden with AIOS_<PATH>, e.g. AIOS_SERVER_ADDR.
+# Secrets support ${ENV_VAR} expansion; prefer environment variables in production.
+
+app:
+  name: AIOS
+  env: development          # development | production
+  data_dir: ./data
+  log_level: info           # debug | info | warn | error
+  log_format: json          # json | text
+
+server:
+  addr: 127.0.0.1:8080
+  public_url: http://localhost:8080
+  read_timeout: 15s
+  write_timeout: 90s        # long enough for SSE streams
+  idle_timeout: 120s
+  shutdown_timeout: 20s
+  max_body_bytes: 1048576
+  cors_origins: ["*"]       # restrict in production
+  enable_graphql: true
+  rate_limit:
+    enabled: true
+    requests_per_minute: 120
+    burst: 40
+    auth_per_minute: 10
+  tls:
+    enabled: false
+    cert_file: ""
+    key_file: ""
+
+database:
+  driver: sqlite            # sqlite | postgres
+  dsn: aios.db              # relative paths resolve under data_dir; for postgres: postgres://user:pass@host/aios?sslmode=disable
+  max_open_conns: 4
+  max_idle_conns: 2
+  conn_max_lifetime: 1h
+  auto_migrate: true
+  seed: true
+
+cache:
+  driver: memory            # memory | redis
+  max_entries: 10000
+  default_ttl: 5m
+  prefix: aios
+  redis:
+    addr: 127.0.0.1:6379
+    password: ""
+    db: 0
+    pool_size: 4
+
+queue:
+  driver: memory            # memory | redis
+  workers: 2
+  max_attempts: 3
+  visibility_timeout: 60s
+  poll_interval: 500ms
+
+vector:
+  driver: local             # local | qdrant
+  qdrant_url: ""
+  qdrant_api_key: ""
+  collection: aios_memories
+  dim: 384
+  timeout: 5s
+
+security:
+  jwt_secret: ""            # >=32 chars in production, or auto_generate_keys
+  issuer: aios
+  access_ttl: 15m
+  refresh_ttl: 720h
+  device_token_ttl: 8760h
+  allowed_clock_skew: 30s
+  encryption_key: ""        # 32-byte hex/base64; auto-generated when empty
+  bcrypt_cost: 10
+  max_login_attempts: 8
+  lockout_duration: 15m
+  auto_generate_keys: true
+  bootstrap:
+    email: admin@aios.local
+    password: ""            # empty => a random password is generated and logged once
+    name: Administrator
+
+llm:
+  default_provider: local
+  default_model: local-template
+  embedding_provider: local
+  embedding_model: hash-384
+  timeout: 120s
+  max_retries: 2
+  max_tool_iterations: 4
+  max_concurrency: 2
+  temperature: 0.7
+  top_p: 0.9
+  max_tokens: 1024
+  daily_budget_usd: 0       # 0 = no cap
+  system_prompt: |
+    You are AIOS, a local-first personal AI operating system.
+    Be accurate and concise. Prefer tools over guessing. Answer in the user's language.
+  providers:
+    - name: local
+      kind: local
+      enabled: true
+      default_model: local-template
+      embedding_dim: 384
+    - name: ollama
+      kind: ollama
+      enabled: false
+      base_url: http://127.0.0.1:11434
+      default_model: qwen2.5:1.5b
+    - name: openai
+      kind: openai
+      enabled: false
+      base_url: https://api.openai.com/v1
+      api_key: ${OPENAI_API_KEY}
+      default_model: gpt-4o-mini
+    - name: anthropic
+      kind: anthropic
+      enabled: false
+      base_url: https://api.anthropic.com
+      api_key: ${ANTHROPIC_API_KEY}
+      default_model: claude-3-5-haiku-latest
+    - name: gemini
+      kind: gemini
+      enabled: false
+      base_url: https://generativelanguage.googleapis.com/v1beta
+      api_key: ${GEMINI_API_KEY}
+      default_model: gemini-2.0-flash
+    - name: deepseek
+      kind: openai
+      enabled: false
+      base_url: https://api.deepseek.com/v1
+      api_key: ${DEEPSEEK_API_KEY}
+      default_model: deepseek-chat
+  routing:
+    - name: voice-fast
+      keywords: ["alarm", "timer", "remind", "turn on", "turn off", "light"]
+      max_tokens: 512
+      temperature: 0.4
+    - name: deep-research
+      intents: ["research", "analysis", "compare", "plan"]
+      max_tokens: 2048
+      temperature: 0.3
+
+voice:
+  enabled: true
+  max_session: 30m
+  sample_rate: 16000
+  interruptions: true
+  stt:
+    provider: whisper_http     # whisper_http | openai | mock
+    base_url: http://127.0.0.1:8000/v1
+    api_key: ""
+    model: whisper-1
+    language: ""               # auto-detect when empty
+    timeout: 60s
+  tts:
+    provider: piper_http       # piper_http | edge_http | openai | mock
+    base_url: http://127.0.0.1:5000
+    api_key: ""
+    voice: en_US-lessac-medium
+    format: wav
+    speed: 1.0
+    timeout: 60s
+  vad:
+    energy_threshold: 0.02
+    frame_ms: 20
+    silence_ms: 700
+    min_speech_ms: 200
+    max_utterance_ms: 30000
+    adaptive: true
+  wake_word:
+    enabled: false
+    words: ["hey aios", "ok aios"]
+    provider: text
+    endpoint: ""
+
+mqtt:
+  enabled: false
+  broker: tcp://127.0.0.1:1883
+  client_id: aios-core
+  username: ""
+  password: ""
+  topic_prefix: aios
+  qos: 1
+  keep_alive_seconds: 30
+  auto_discovery: true
+
+home_assistant:
+  enabled: false
+  base_url: http://127.0.0.1:8123
+  token: ${HOME_ASSISTANT_TOKEN}
+  timeout: 10s
+
+plugins:
+  enabled: true
+  dir: ./plugins
+  allow_http: true
+  allowed_hosts: []            # empty = any host; set a list to restrict egress
+  timeout: 20s
+  max_response_bytes: 524288
+
+memory:
+  max_short_turns: 20
+  long_term_enabled: true
+  semantic_enabled: true
+  consolidate_every: 10
+  summarize_after_messages: 40
+  retention_days: 0            # 0 = keep forever
+  max_per_user: 5000
+  retrieval_top_k: 5
+  min_similarity: 0.25
+  max_context_tokens: 3000
+
+observability:
+  metrics_enabled: true
+  pprof_enabled: false
+  system_stats_interval: 30s
+
+scheduler:
+  enabled: true
+  poll_interval: 5s
+  max_concurrent: 2
+  timezone: UTC
+
+tools:
+  internet_enabled: true
+  search_provider: duckduckgo # duckduckgo | searxng | wikipedia | mock
+  searx_url: ""
+  http_timeout: 15s
+  max_fetch_bytes: 2097152
+  max_search_results: 6
+  user_agent: "AIOS/1.0 (+https://github.com/ArsinShaabani/AIOS)"
+  block_private_ips: true
+

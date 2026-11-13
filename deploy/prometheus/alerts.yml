@@ -1,0 +1,33 @@
+groups:
+  - name: aios
+    rules:
+      - alert: AiosDown
+        expr: up{job="aios"} == 0
+        for: 1m
+        labels: {severity: critical}
+        annotations:
+          summary: "AIOS is not responding to Prometheus"
+      - alert: AiosHighErrorRate
+        expr: sum(rate(aios_http_requests_total{status="5xx"}[5m])) / sum(rate(aios_http_requests_total[5m])) > 0.05
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "AIOS 5xx error rate above 5%"
+      - alert: AiosModelFailures
+        expr: sum(rate(aios_llm_requests_total{status="error"}[5m])) > 0.2
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "Model provider failures sustained"
+      - alert: AiosQueueBacklog
+        expr: aios_queue_depth > 100
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "Task queue backlog is growing"
+      - alert: AiosMemoryPressure
+        expr: process_resident_memory_bytes{job="aios"} > 700e6
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "AIOS RSS above 700 MB on an edge host"

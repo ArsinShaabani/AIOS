@@ -1,2 +1,103 @@
 # AIOS
-Personal AI Operating System
+
+**Personal AI Operating System** — a local-first AI core that runs on a 1 CPU /
+1 GB Linux box, a Raspberry Pi or a mini PC. Chat, agents, long-term memory,
+personality, voice, devices, plugins and an admin dashboard in a single Go binary.
+
+```
+┌────────────────────────────────────────────────────────────┐
+│ Chat · Voice · Devices · Agents · Memory · Plugins · Admin │
+├────────────────────────────────────────────────────────────┤
+│ Brain: intent → agent → model router → tools → streaming   │
+│ Memory: short-term · long-term · semantic (CPU embeddings) │
+│ Providers: local · Ollama · OpenAI · Anthropic · Gemini …  │
+│ Edge: SQLite · in-memory cache/queue · no GPU · no cgo     │
+└────────────────────────────────────────────────────────────┘
+```
+
+## Why it is different
+
+- **Actually small.** Pure-Go SQLite, bounded caches/queues, GOGC/GOMEMLIMIT
+  defaults; idle RSS stays far below the 1 GB budget. Cross-compiles to ARM.
+- **Not locked to a model.** Add Ollama, OpenAI, Anthropic, Gemini, DeepSeek,
+  Mistral or any OpenAI-compatible server. Fallbacks, circuit breakers, cost
+  accounting and per-intent routing live in the router.
+- **Agentic but safe.** Tool calls are typed, time-boxed and capability-bounded;
+  device commands cannot exceed declared min/max limits; web fetches block private
+  IPs; secrets never reach logs.
+- **Memory that works offline.** Lexical hash embeddings by default, real
+  embedding providers when available. Farsi and English extraction built in.
+- **Runs alone.** Dashboard, OpenAPI spec and GraphQL playground are embedded in
+  the binary — no npm build step, no CDN, no external service required.
+
+## Quick start
+
+```bash
+git clone https://github.com/ArsinShaabani/AIOS.git && cd AIOS
+go build -trimpath -o aios ./cmd/aios
+cp config.example.yaml config.yaml        # edit as needed
+AIOS_SECURITY_BOOTSTRAP_PASSWORD='change-me-now' ./aios server
+```
+
+Open `http://127.0.0.1:8080` and sign in as `admin@aios.local`.
+
+For real answers, run a local model:
+
+```bash
+ollama pull qwen2.5:1.5b
+AIOS_LLM_DEFAULT_PROVIDER=ollama AIOS_LLM_DEFAULT_MODEL=qwen2.5:1.5b ./aios server
+```
+
+Docker: `AIOS_ADMIN_PASSWORD=... docker compose up -d --build`.
+Full stack (Postgres/Redis/Qdrant/Ollama/Whisper/Piper):
+`docker compose -f deploy/docker-compose.full.yml up -d`.
+
+## What is included
+
+| Area | Status |
+|---|---|
+| REST + SSE + WebSocket + GraphQL APIs | ✅ |
+| Streaming chat with tool-calling loop | ✅ |
+| Providers: local, Ollama, OpenAI-compatible, Anthropic, Gemini | ✅ |
+| Routing rules, fallbacks, breakers, token/cost accounting | ✅ |
+| Three-tier memory + extraction (EN/FA) + semantic recall | ✅ |
+| Personalities, agents, prompt viewer | ✅ |
+| Devices: MQTT, HTTP, capability validation, telemetry | ✅ |
+| Home Assistant, navigation, email, reminders/automations | ✅ |
+| Voice: VAD, Whisper, Piper/Edge/OpenAI TTS, wake word, barge-in | ✅ |
+| Plugins: manifest + HTTP tools, permissions, allow-list | ✅ |
+| Security: JWT + refresh rotation, RBAC, audit, AES-GCM, SSRF guard | ✅ |
+| Admin SPA, Prometheus metrics, health, audit | ✅ |
+| Docker (multi-arch), compose profiles, systemd, CI/release | ✅ |
+| Postgres / Redis / Qdrant adapters | ✅ (opt-in) |
+| Test coverage 80% | ⚠️ not yet — see [DESIGN.md](docs/DESIGN.md#7-test-strategy) |
+
+Roadmap, MVP definition and risks: [docs/DESIGN.md](docs/DESIGN.md).
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md) · [Design details + ERD + roadmap](docs/DESIGN.md)
+- [API reference](docs/API.md) · OpenAPI at `/openapi.yaml`
+- [Deployment](docs/DEPLOYMENT.md) · [Security](docs/SECURITY.md)
+- [Voice system](docs/VOICE_SYSTEM.md) · [Device integration](docs/DEVICE_INTEGRATION.md)
+- [Plugin development](docs/PLUGIN_DEVELOPMENT.md) · [User guide](docs/USER_GUIDE.md)
+
+## Development
+
+```bash
+make test        # unit + e2e
+make race        # race detector
+make cover       # coverage profile
+make lint        # gofmt + vet
+make build       # bin/aios
+make release     # linux amd64/arm64/armv7 + checksums
+```
+
+Layout: `internal/{domain,ports,config,security,memory,brain,llm,tools,devices,…}`,
+adapters under `internal/adapters`, transports under `internal/transport`, single
+composition root in `internal/app`.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+

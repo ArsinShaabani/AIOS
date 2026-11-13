@@ -1,0 +1,133 @@
+openapi: 3.0.3
+info:
+  title: AIOS API
+  version: 1.0.0
+  description: Local-first AI OS — chat, memory, devices, voice, plugins.
+servers: [{url: "http://localhost:8080"}]
+security: [{bearerAuth: []}]
+paths:
+  /healthz: {get: {security: [], responses: {"200": {description: OK}}}}
+  /readyz: {get: {security: [], responses: {"200": {description: OK}, "503": {description: Degraded}}}}
+  /metrics: {get: {security: [], responses: {"200": {description: Prometheus text}}}}
+  /api/v1/auth/login:
+    post:
+      security: []
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [email, password], properties: {email: {type: string}, password: {type: string}}}}}
+      responses: {"200": {description: Tokens}, "401": {description: Invalid credentials}}
+  /api/v1/auth/refresh:
+    post:
+      security: []
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [refresh_token], properties: {refresh_token: {type: string}}}}}}
+      responses: {"200": {description: Rotated pair}}
+  /api/v1/auth/me: {get: {responses: {"200": {description: User + permissions}}}}
+  /api/v1/chat:
+    post:
+      requestBody:
+        required: true
+        content: {application/json: {schema: {type: object, required: [message], properties: {message: {type: string}, session_id: {type: string}, agent_id: {type: string}, personality_id: {type: string}, channel: {type: string}, stream: {type: boolean}}}}}
+      responses: {"200": {description: ChatOutput or text/event-stream, content: {application/json: {schema: {$ref: "#/components/schemas/ChatOutput"}}, text/event-stream: {schema: {type: string}}}}}
+  /api/v1/sessions:
+    get: {parameters: [{in: query, name: limit, schema: {type: integer}}], responses: {"200": {description: Sessions}}}
+  /api/v1/sessions/{id}:
+    parameters: [{$ref: "#/components/parameters/Id"}]
+    get: {responses: {"200": {description: Session}}}
+    patch: {responses: {"200": {description: Updated}}}
+    delete: {responses: {"204": {description: Deleted}}}
+  /api/v1/sessions/{id}/messages:
+    get:
+      parameters: [{$ref: "#/components/parameters/Id"}, {in: query, name: limit, schema: {type: integer}}]
+      responses: {"200": {description: Messages}}
+  /api/v1/memories:
+    get:
+      parameters: [{in: query, name: q, schema: {type: string}}, {in: query, name: tier, schema: {type: string}}, {in: query, name: kind, schema: {type: string}}]
+      responses: {"200": {description: Memories}}
+    post:
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [content], properties: {content: {type: string}, kind: {type: string}, importance: {type: number}, tags: {type: array, items: {type: string}}}}}}}
+      responses: {"201": {description: Created}}
+    delete: {responses: {"200": {description: Wiped}}}
+  /api/v1/memories/{id}:
+    delete: {parameters: [{$ref: "#/components/parameters/Id"}], responses: {"204": {description: Deleted}}}
+  /api/v1/devices:
+    get: {responses: {"200": {description: Devices}}}
+    post:
+      requestBody: {required: true, content: {application/json: {schema: {$ref: "#/components/schemas/Device"}}}}
+      responses: {"201": {description: Device + one-time token}}
+  /api/v1/devices/{id}:
+    parameters: [{$ref: "#/components/parameters/Id"}]
+    get: {responses: {"200": {description: Device}}}
+    patch: {responses: {"200": {description: Updated}}}
+    delete: {responses: {"204": {description: Deleted}}}
+  /api/v1/devices/{id}/command:
+    post:
+      parameters: [{$ref: "#/components/parameters/Id"}]
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [capability, value], properties: {capability: {type: string}, value: {}}}}}}
+      responses: {"200": {description: Result}, "400": {description: Out of bounds}}
+  /api/v1/devices/{id}/telemetry:
+    get: {parameters: [{$ref: "#/components/parameters/Id"}], responses: {"200": {description: Telemetry}}}
+  /api/v1/device/telemetry:
+    post:
+      security: [{deviceAuth: []}]
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [metric, value], properties: {metric: {type: string}, value: {}, unit: {type: string}}}}}}
+      responses: {"202": {description: Accepted}}
+  /api/v1/device/heartbeat:
+    post: {security: [{deviceAuth: []}], responses: {"200": {description: Online}}}
+  /api/v1/voice/config: {get: {responses: {"200": {description: Voice config}}}}
+  /api/v1/voice/transcribe:
+    post:
+      requestBody: {content: {multipart/form-data: {schema: {type: object, properties: {audio: {type: string, format: binary}}}}}}
+      responses: {"200": {description: Transcript}}
+  /api/v1/voice/synthesize:
+    post:
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [text], properties: {text: {type: string}, voice: {type: string}, format: {type: string}}}}}}
+      responses: {"200": {description: Audio}}
+  /api/v1/models: {get: {responses: {"200": {description: Providers and routing}}}}
+  /api/v1/usage:
+    get: {parameters: [{in: query, name: from, schema: {type: string}}, {in: query, name: to, schema: {type: string}}, {in: query, name: all, schema: {type: boolean}}], responses: {"200": {description: Totals}}}
+  /api/v1/plugins:
+    get: {responses: {"200": {description: Plugins}}}
+    post: {responses: {"201": {description: Installed}}}
+  /api/v1/plugins/{id}:
+    parameters: [{$ref: "#/components/parameters/Id"}]
+    patch: {responses: {"200": {description: Toggled}}}
+    delete: {responses: {"204": {description: Removed}}}
+  /api/v1/admin/overview: {get: {responses: {"200": {description: Dashboard summary}}}}
+  /api/v1/admin/users:
+    get: {responses: {"200": {description: Users}}}
+    post: {responses: {"201": {description: Created}}}
+  /api/v1/admin/audit:
+    get: {parameters: [{in: query, name: action, schema: {type: string}}], responses: {"200": {description: Audit}}}
+  /graphql:
+    post:
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [query], properties: {query: {type: string}, variables: {type: object}}}}}}
+      responses: {"200": {description: GraphQL result}}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}
+    deviceAuth: {type: http, scheme: bearer, description: "Device token (dev_…)"}
+  parameters:
+    Id: {in: path, name: id, required: true, schema: {type: string}}
+  schemas:
+    ChatOutput:
+      type: object
+      properties:
+        session_id: {type: string}
+        message_id: {type: string}
+        content: {type: string}
+        agent_id: {type: string}
+        provider: {type: string}
+        model: {type: string}
+        intent: {type: string}
+        usage: {type: object, properties: {prompt_tokens: {type: integer}, completion_tokens: {type: integer}, total_tokens: {type: integer}}}
+    Device:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string}
+        kind: {type: string}
+        protocol: {type: string, enum: [mqtt, http, ws, tcp, rosbridge]}
+        room: {type: string}
+        capabilities: {type: array, items: {type: object, properties: {name: {type: string}, type: {type: string}, min: {type: number}, max: {type: number}, unit: {type: string}}}}
+        metadata: {type: object}
+

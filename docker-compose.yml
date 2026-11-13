@@ -1,0 +1,57 @@
+# AIOS — default single-node profile for 1 CPU / 1 GB RAM.
+# Only the core is started; enable optional services in the full profile.
+services:
+  init-data:
+    image: busybox:1.37
+    command: ["sh", "-c", "chown -R 65532:65532 /data && chmod 0750 /data"]
+    volumes:
+      - aios-data:/data
+    restart: "no"
+
+  aios:
+    build:
+      context: .
+      args:
+        VERSION: "1.0.0"
+    image: aios:local
+    container_name: aios
+    restart: unless-stopped
+    depends_on:
+      init-data:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    volumes:
+      - aios-data:/data
+      - ./config.yaml:/app/config.yaml:ro
+      - ./plugins:/app/plugins:ro
+    environment:
+      AIOS_APP_ENV: production
+      AIOS_APP_DATA_DIR: /data
+      AIOS_DATABASE_DSN: /data/aios.db
+      AIOS_SERVER_ADDR: 0.0.0.0:8080
+      AIOS_SERVER_CORS_ORIGINS: "${AIOS_ORIGIN:-http://localhost:8080}"
+      AIOS_SECURITY_BOOTSTRAP_EMAIL: "${AIOS_ADMIN_EMAIL:-admin@aios.local}"
+      AIOS_SECURITY_BOOTSTRAP_PASSWORD: "${AIOS_ADMIN_PASSWORD:?set AIOS_ADMIN_PASSWORD}"
+      AIOS_SECURITY_AUTO_GENERATE_KEYS: "true"
+      AIOS_LLM_DEFAULT_PROVIDER: "${AIOS_LLM_PROVIDER:-local}"
+      AIOS_LLM_DEFAULT_MODEL: "${AIOS_LLM_MODEL:-local-template}"
+      AIOS_VOICE_ENABLED: "true"
+      AIOS_VOICE_STT_PROVIDER: "${AIOS_STT_PROVIDER:-mock}"
+      AIOS_VOICE_TTS_PROVIDER: "${AIOS_TTS_PROVIDER:-mock}"
+      GOMEMLIMIT: 384MiB
+    mem_limit: 512m
+    cpus: 1.0
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/aios", "doctor"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  aios-data:

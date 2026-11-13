@@ -1,0 +1,24 @@
+# Build artifacts
+/bin/
+/dist/
+/aios
+coverage.out
+coverage-e2e.out
+
+# Local runtime data
+/data/
+/.tmp/
+*.db
+*.db-wal
+*.db-shm
+
+# Local configuration & secrets
+/config.yaml
+.env
+*.pem
+*.key
+
+# Editor/OS noise
+.DS_Store
+.idea/
+.vscode/

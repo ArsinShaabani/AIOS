@@ -1,0 +1,39 @@
+[Unit]
+Description=AIOS — local-first AI operating system
+Documentation=https://github.com/ArsinShaabani/AIOS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=aios
+Group=aios
+WorkingDirectory=/opt/aios
+Environment=AIOS_CONFIG=/etc/aios/config.yaml
+Environment=AIOS_APP_DATA_DIR=/var/lib/aios
+Environment=GOMEMLIMIT=384MiB
+Environment=GOGC=60
+ExecStart=/usr/local/bin/aios server
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=30
+LimitNOFILE=65536
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/aios /var/log/aios
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target
