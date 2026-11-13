@@ -187,6 +187,13 @@ mqtt:
   qos: 1
   keep_alive_seconds: 30
   auto_discovery: true
+  bridge:
+    enabled: false            # authenticated chat over MQTT
+    request_topic: aios/bridge/chat
+    reply_prefix: aios/bridge/reply
+    max_message_bytes: 65536
+    max_concurrency: 4
+    requests_per_minute: 30
 
 home_assistant:
   enabled: false

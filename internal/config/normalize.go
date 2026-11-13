@@ -111,5 +111,23 @@ func (c *Config) Normalize() error {
 	if c.Voice.WakeWord.Provider == "" {
 		c.Voice.WakeWord.Provider = "text"
 	}
+	if c.MQTT.TopicPrefix == "" {
+		c.MQTT.TopicPrefix = "aios"
+	}
+	if c.MQTT.Bridge.RequestTopic == "" {
+		c.MQTT.Bridge.RequestTopic = strings.Trim(c.MQTT.TopicPrefix, "/") + "/bridge/chat"
+	}
+	if c.MQTT.Bridge.ReplyPrefix == "" {
+		c.MQTT.Bridge.ReplyPrefix = strings.Trim(c.MQTT.TopicPrefix, "/") + "/bridge/reply"
+	}
+	if c.MQTT.Bridge.MaxMessageBytes <= 0 {
+		c.MQTT.Bridge.MaxMessageBytes = 64 << 10
+	}
+	if c.MQTT.Bridge.MaxConcurrency <= 0 {
+		c.MQTT.Bridge.MaxConcurrency = 4
+	}
+	if c.MQTT.Bridge.RequestsPerMinute <= 0 {
+		c.MQTT.Bridge.RequestsPerMinute = 30
+	}
 	return nil
 }

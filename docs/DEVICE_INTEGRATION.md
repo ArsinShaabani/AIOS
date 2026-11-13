@@ -127,3 +127,69 @@ Presence: `GET /api/v1/devices?status=online`; cache:
 
 For thousands of devices keep `queue.workers` low and let MQTT fan out; scale out
 with Redis and multiple AIOS replicas behind the broker.
+
+## 9. Chat over MQTT (authenticated bridge)
+
+Constrained firmware can chat without HTTP. Enable the bridge:
+
+```yaml
+mqtt:
+  enabled: true
+  broker: tls://broker.local:8883
+  bridge:
+    enabled: true
+    request_topic: aios/bridge/chat
+    reply_prefix: aios/bridge/reply
+    requests_per_minute: 30
+```
+
+Create an API key with the `chat` scope and publish a request:
+
+```json
+{
+  "id": "req-42",
+  "api_key": "aios_…",
+  "message": "turn on the kitchen light",
+  "session_id": "ses_optional",
+  "agent_id": "agent_home",
+  "reply_to": "aios/bridge/reply/req-42"
+}
+```
+
+```bash
+mosquitto_pub -h broker.local -t aios/bridge/chat -q 1 -m @request.json --cafile ca.crt
+mosquitto_sub -h broker.local -t aios/bridge/reply/req-42 -q 1 -C 1 --cafile ca.crt
+```
+
+Reply:
+
+```json
+{
+  "id": "req-42",
+  "session_id": "ses_…",
+  "content": "Done.",
+  "agent_id": "agent_home",
+  "provider": "ollama",
+  "model": "qwen2.5:1.5b",
+  "usage": {"prompt_tokens": 120, "completion_tokens": 12, "total_tokens": 132},
+  "latency_ms": 840,
+  "at": "2026-01-01T12:00:00Z"
+}
+```
+
+Security and limits:
+
+- API keys are hashed at rest; revoked/expired keys and disabled accounts are rejected.
+- Scope must include `chat` (admin implies it); requests are rate-limited per key.
+- `reply_to` must stay under `reply_prefix`; wildcards are rejected and unsafe IDs
+  are sanitised. Replies default to `<reply_prefix>/<id>`.
+- `max_message_bytes` (64 KiB) and 12000-character messages are enforced; up to
+  `max_concurrency` requests run in parallel and excess requests receive
+  `mqttbridge.busy`.
+- Errors carry `code`/`error` (`mqttbridge.api_key`, `mqttbridge.scope`,
+  `mqttbridge.rate_limited`, `chat.empty`, `llm.*`). Nothing sensitive is echoed.
+- Deploy with TLS (`tls://` or a local broker) because the API key travels in the
+  payload; give the broker per-device ACLs and rotate keys.
+- The bridge runs in-process; with multiple AIOS replicas use shared subscriptions
+  or a per-replica topic prefix to avoid duplicate replies.
+

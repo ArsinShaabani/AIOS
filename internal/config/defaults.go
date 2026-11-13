@@ -131,6 +131,14 @@ func Default() Config {
 			QoS:           1,
 			KeepAlive:     30,
 			AutoDiscovery: true,
+			Bridge: MQTTBridgeConfig{
+				Enabled:           false,
+				RequestTopic:      "aios/bridge/chat",
+				ReplyPrefix:       "aios/bridge/reply",
+				MaxMessageBytes:   65536,
+				MaxConcurrency:    4,
+				RequestsPerMinute: 30,
+			},
 		},
 		HomeAssistant: HomeAssistantConfig{Timeout: Duration(10e9)},
 		Plugins: PluginConfig{

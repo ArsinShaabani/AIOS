@@ -1,15 +1,27 @@
 package config
 
 type MQTTConfig struct {
-	Enabled       bool   `yaml:"enabled"`
-	Broker        string `yaml:"broker"`
-	ClientID      string `yaml:"client_id"`
-	Username      string `yaml:"username"`
-	Password      string `yaml:"password"`
-	TopicPrefix   string `yaml:"topic_prefix"`
-	QoS           byte   `yaml:"qos"`
-	KeepAlive     int    `yaml:"keep_alive_seconds"`
-	AutoDiscovery bool   `yaml:"auto_discovery"`
+	Enabled       bool             `yaml:"enabled"`
+	Broker        string           `yaml:"broker"`
+	ClientID      string           `yaml:"client_id"`
+	Username      string           `yaml:"username"`
+	Password      string           `yaml:"password"`
+	TopicPrefix   string           `yaml:"topic_prefix"`
+	QoS           byte             `yaml:"qos"`
+	KeepAlive     int              `yaml:"keep_alive_seconds"`
+	AutoDiscovery bool             `yaml:"auto_discovery"`
+	Bridge        MQTTBridgeConfig `yaml:"bridge"`
+}
+
+// MQTTBridgeConfig exposes an authenticated chat endpoint over MQTT. Requests
+// carry an AIOS API key; replies are published to a constrained topic prefix.
+type MQTTBridgeConfig struct {
+	Enabled           bool   `yaml:"enabled"`
+	RequestTopic      string `yaml:"request_topic"`
+	ReplyPrefix       string `yaml:"reply_prefix"`
+	MaxMessageBytes   int    `yaml:"max_message_bytes"`
+	MaxConcurrency    int    `yaml:"max_concurrency"`
+	RequestsPerMinute int    `yaml:"requests_per_minute"`
 }
 
 type HomeAssistantConfig struct {

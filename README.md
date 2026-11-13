@@ -63,6 +63,7 @@ Full stack (Postgres/Redis/Qdrant/Ollama/Whisper/Piper):
 | Three-tier memory + extraction (EN/FA) + semantic recall | ✅ |
 | Personalities, agents, prompt viewer | ✅ |
 | Devices: MQTT, HTTP, capability validation, telemetry | ✅ |
+| Authenticated MQTT chat bridge (API keys, rate limits) | ✅ |
 | Home Assistant, navigation, email, reminders/automations | ✅ |
 | Voice: VAD, Whisper, Piper/Edge/OpenAI TTS, wake word, barge-in | ✅ |
 | Plugins: HTTP tools + WASM sandbox (wazero) + permissions | ✅ |
@@ -73,7 +74,7 @@ Full stack (Postgres/Redis/Qdrant/Ollama/Whisper/Piper):
 | Postgres / Redis / Qdrant adapters | ✅ (opt-in) |
 | Queue visibility timeout + stale task reclaim | ✅ |
 | PostgreSQL integration tests in CI | ✅ |
-| Test coverage | ✅ 80%+ enforced in CI (currently ~80.2%; see [DESIGN.md](docs/DESIGN.md#7-test-strategy)) |
+| Test coverage | ✅ 80%+ enforced in CI (currently ~80.8%; see [DESIGN.md](docs/DESIGN.md#7-test-strategy)) |
 
 Roadmap, MVP definition and risks: [docs/DESIGN.md](docs/DESIGN.md).
 

@@ -105,14 +105,20 @@ func quoteJSON(s string) string {
 }
 
 func (a *App) startMQTTBridge(ctx context.Context) {
-	if a.MQTTTransport == nil {
-		return
+	if a.MQTTTransport != nil {
+		if err := a.MQTTTransport.Subscribe(ctx, func(t ports.Telemetry) {
+			a.Devices.HandleTelemetry(ctx, t)
+		}); err != nil {
+			a.Log.Warn("cannot subscribe to device telemetry", "error", err)
+		} else {
+			a.Log.Info("MQTT device bridge active", "prefix", a.Config.MQTT.TopicPrefix)
+		}
 	}
-	if err := a.MQTTTransport.Subscribe(ctx, func(t ports.Telemetry) {
-		a.Devices.HandleTelemetry(ctx, t)
-	}); err != nil {
-		a.Log.Warn("cannot subscribe to device telemetry", "error", err)
-		return
+	if a.MQTTBridge != nil {
+		if err := a.MQTTBridge.Start(ctx); err != nil {
+			a.Log.Warn("cannot start MQTT chat bridge", "error", err)
+		}
+	} else if a.Config.MQTT.Bridge.Enabled {
+		a.Log.Warn("MQTT chat bridge requested but the broker is not connected")
 	}
-	a.Log.Info("MQTT device bridge active", "prefix", a.Config.MQTT.TopicPrefix)
 }

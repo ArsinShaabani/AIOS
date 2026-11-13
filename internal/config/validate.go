@@ -152,6 +152,22 @@ func (c *Config) Validate() error {
 	if c.Plugins.Enabled && c.Plugins.Dir == "" {
 		add("plugins.dir is required when plugins are enabled")
 	}
+	if c.MQTT.Bridge.Enabled {
+		if !c.MQTT.Enabled {
+			add("mqtt.bridge requires mqtt.enabled")
+		}
+		for _, topic := range []string{c.MQTT.Bridge.RequestTopic, c.MQTT.Bridge.ReplyPrefix} {
+			if topic == "" || strings.ContainsAny(topic, "+#") {
+				add("mqtt.bridge topics must be concrete (no wildcards)")
+			}
+		}
+		if c.MQTT.Bridge.MaxMessageBytes < 1024 || c.MQTT.Bridge.MaxMessageBytes > 4<<20 {
+			add("mqtt.bridge.max_message_bytes must be within [1024, 4194304]")
+		}
+		if c.MQTT.Bridge.MaxConcurrency < 1 || c.MQTT.Bridge.MaxConcurrency > 64 {
+			add("mqtt.bridge.max_concurrency must be within [1,64]")
+		}
+	}
 	if c.Plugins.MaxWASMBytes <= 0 {
 		c.Plugins.MaxWASMBytes = 16 << 20
 	}

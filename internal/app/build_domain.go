@@ -8,6 +8,7 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/adapters/mqtt"
 	"github.com/ArsinShaabani/AIOS/internal/brain"
 	"github.com/ArsinShaabani/AIOS/internal/devices"
+	"github.com/ArsinShaabani/AIOS/internal/mqttbridge"
 	"github.com/ArsinShaabani/AIOS/internal/plugins"
 	"github.com/ArsinShaabani/AIOS/internal/ports"
 	"github.com/ArsinShaabani/AIOS/internal/scheduler"
@@ -62,6 +63,9 @@ func (a *App) initDomain(ctx context.Context) error {
 	}
 	a.Voice = voice.NewService(a.Config.Voice, stt, tts, a.Log)
 	a.Plugins = plugins.New(a.Repos.Plugins, registry, a.Config.Plugins, a.Log)
+	if a.MQTT != nil && a.Config.MQTT.Bridge.Enabled {
+		a.MQTTBridge = mqttbridge.New(a.Config.MQTT, a.MQTT, a.Repos.Tokens, a.Repos.Users, a.Brain, a.Auditor, a.Log)
+	}
 	return nil
 }
 

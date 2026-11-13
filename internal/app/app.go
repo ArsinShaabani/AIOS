@@ -18,6 +18,7 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/devices"
 	"github.com/ArsinShaabani/AIOS/internal/llm"
 	"github.com/ArsinShaabani/AIOS/internal/memory"
+	"github.com/ArsinShaabani/AIOS/internal/mqttbridge"
 	"github.com/ArsinShaabani/AIOS/internal/observability"
 	"github.com/ArsinShaabani/AIOS/internal/personality"
 	"github.com/ArsinShaabani/AIOS/internal/plugins"
@@ -58,6 +59,7 @@ type App struct {
 	Plugins       *plugins.Host
 	MQTT          *mqtt.Client
 	MQTTTransport *mqtt.Transport
+	MQTTBridge    *mqttbridge.Bridge
 
 	Bus     *Bus
 	Metrics *observability.Metrics
