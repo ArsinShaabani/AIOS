@@ -75,4 +75,17 @@ func TestPluginLifecycle(t *testing.T) {
 	}); status != 400 {
 		t.Fatalf("admin permission must be rejected, got %d", status)
 	}
+	// WASM installs validate base64 and require a module.
+	if status, _ := e.do("POST", "/api/v1/plugins", e.token, map[string]any{
+		"name": "wasm-bad-b64", "kind": "wasm", "wasm_module": "!!!not-base64!!!",
+		"tools": []map[string]any{{"name": "wasm_tool"}},
+	}); status != 400 {
+		t.Fatalf("invalid base64 module must be 400, got %d", status)
+	}
+	if status, _ := e.do("POST", "/api/v1/plugins", e.token, map[string]any{
+		"name": "wasm-no-module", "kind": "wasm",
+		"tools": []map[string]any{{"name": "wasm_tool2"}},
+	}); status != 400 {
+		t.Fatalf("missing WASM module must be 400, got %d", status)
+	}
 }

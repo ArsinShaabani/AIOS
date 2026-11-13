@@ -73,10 +73,13 @@ not only in handlers. API key scopes narrow the role; they never widen it.
 ## 6. Plugin model
 
 Plugins run out of process; AIOS never loads plugin code into its address space.
-Admins install manifests, permissions are validated against a known set, HTTP
-egress can be restricted with `plugins.allowed_hosts`, and execution is bounded by
-time and response size. Treat plugins as you would a browser extension: install
-only from sources you trust.
+WASM plugins execute as WASI commands in a fresh wazero sandbox with no
+filesystem pre-opens, no environment, no network, bounded linear memory and a
+wall-clock deadline. HTTP plugins are bounded by host allow-lists, timeouts and
+response size. Ed25519 signatures over the canonical manifest and module bytes
+are verified against `plugins.trusted_keys`; `require_signature` rejects
+unsigned artifacts, and stored modules are re-hashed on every boot. Treat
+plugins as you would a browser extension: install only from sources you trust.
 
 ## 7. Production checklist
 
@@ -105,5 +108,5 @@ only from sources you trust.
 - API keys are hashed, so the plaintext cannot be recovered or displayed later.
 - The local hash embedder is lexical, not semantic-grade; enable a real embedding
   provider for higher-quality recall. It never sends data anywhere by itself.
-- Plugin signing and a WASM sandbox are roadmap items; today isolation is
-  process/HTTP-level.
+- Plugin signing covers manifests and WASM bytes; key distribution and
+  revocation remain operational responsibilities.

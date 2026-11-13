@@ -39,6 +39,10 @@ func main() {
 		runConfig(args)
 	case "hash-password":
 		runHashPassword(args)
+	case "plugin-keygen":
+		runPluginKeygen(args)
+	case "plugin-sign":
+		runPluginSign(args)
 	case "version", "--version", "-v":
 		fmt.Printf("AIOS %s (%s, %s)\n", version.Version, version.Commit, version.Date)
 	case "help", "--help", "-h":
@@ -63,6 +67,8 @@ Commands:
   doctor          Check configuration and dependencies
   config          Print the effective configuration as YAML
   hash-password   Hash a password for manual seeding
+  plugin-keygen   Generate an Ed25519 plugin signing key pair
+  plugin-sign     Sign a plugin manifest (and optional WASM module)
   version         Print build information
 
 Common flags:

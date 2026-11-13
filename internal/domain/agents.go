@@ -109,7 +109,8 @@ type PluginTool struct {
 	Path        string          `json:"path,omitempty"`
 }
 
-// Plugin is an out-of-process extension (HTTP webhook or built-in adapter).
+// Plugin is an out-of-process extension (HTTP webhook, WASM module or built-in
+// adapter).
 type Plugin struct {
 	ID          string          `json:"id"`
 	Name        string          `json:"name"`
@@ -117,11 +118,14 @@ type Plugin struct {
 	Description string          `json:"description"`
 	Author      string          `json:"author,omitempty"`
 	Homepage    string          `json:"homepage,omitempty"`
-	Kind        string          `json:"kind"` // http | builtin
+	Kind        string          `json:"kind"` // http | wasm | builtin
 	Endpoint    string          `json:"endpoint,omitempty"`
 	Permissions []string        `json:"permissions"`
 	Tools       []PluginTool    `json:"tools"`
 	Manifest    json.RawMessage `json:"manifest,omitempty"`
+	Signature   string          `json:"signature,omitempty"`
+	WasmSHA256  string          `json:"wasm_sha256,omitempty"`
+	WasmSize    int64           `json:"wasm_size,omitempty"`
 	Enabled     bool            `json:"enabled"`
 	Verified    bool            `json:"verified"`
 	InstalledAt time.Time       `json:"installed_at"`

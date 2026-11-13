@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crypto/ed25519"
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
@@ -139,6 +140,23 @@ func (c *Config) Validate() error {
 	if c.Plugins.Enabled && c.Plugins.Dir == "" {
 		add("plugins.dir is required when plugins are enabled")
 	}
+	if c.Plugins.MaxWASMBytes <= 0 {
+		c.Plugins.MaxWASMBytes = 16 << 20
+	}
+	if c.Plugins.WASMTimeout <= 0 {
+		c.Plugins.WASMTimeout = Duration(10 * time.Second)
+	}
+	if c.Plugins.WASMMemoryPages == 0 {
+		c.Plugins.WASMMemoryPages = 256
+	}
+	if c.Plugins.RequireSignature && len(c.Plugins.TrustedKeys) == 0 {
+		add("plugins.trusted_keys is required when require_signature is true")
+	}
+	for _, key := range c.Plugins.TrustedKeys {
+		if _, err := configDecodePublicKey(key); err != nil {
+			add("plugins.trusted_keys: %v", err)
+		}
+	}
 	if _, err := time.LoadLocation(c.Scheduler.Timezone); err != nil {
 		add("scheduler.timezone %q is invalid", c.Scheduler.Timezone)
 	}
@@ -180,4 +198,19 @@ func DecodeKey(s string) ([]byte, error) {
 		return b, nil
 	}
 	return nil, fmt.Errorf("must be 32 bytes encoded as hex or base64")
+}
+
+// configDecodePublicKey validates an Ed25519 plugin signing key.
+func configDecodePublicKey(s string) (ed25519.PublicKey, error) {
+	raw, err := base64.StdEncoding.DecodeString(strings.TrimSpace(s))
+	if err != nil {
+		raw, err = base64.RawStdEncoding.DecodeString(strings.TrimSpace(s))
+	}
+	if err != nil {
+		return nil, fmt.Errorf("must be base64-encoded Ed25519 public key")
+	}
+	if len(raw) != ed25519.PublicKeySize {
+		return nil, fmt.Errorf("must be a %d-byte Ed25519 public key", ed25519.PublicKeySize)
+	}
+	return ed25519.PublicKey(raw), nil
 }

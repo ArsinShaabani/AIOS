@@ -196,9 +196,16 @@ plugins:
   enabled: true
   dir: ./plugins
   allow_http: true
+  allow_wasm: true
   allowed_hosts: []            # empty = any host; set a list to restrict egress
   timeout: 20s
   max_response_bytes: 524288
+  # WASM sandbox + supply-chain security
+  max_wasm_bytes: 16777216     # 16 MiB
+  wasm_timeout: 10s
+  wasm_memory_pages: 256       # 64 KiB pages => 16 MiB linear memory
+  require_signature: false     # true in production for third-party plugins
+  trusted_keys: []             # base64 Ed25519 public keys
 
 memory:
   max_short_turns: 20

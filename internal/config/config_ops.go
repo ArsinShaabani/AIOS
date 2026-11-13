@@ -23,9 +23,16 @@ type PluginConfig struct {
 	Enabled          bool     `yaml:"enabled"`
 	Dir              string   `yaml:"dir"`
 	AllowHTTP        bool     `yaml:"allow_http"`
+	AllowWASM        bool     `yaml:"allow_wasm"`
 	AllowedHosts     []string `yaml:"allowed_hosts"`
 	Timeout          Duration `yaml:"timeout"`
 	MaxResponseBytes int64    `yaml:"max_response_bytes"`
+	// Signing: Ed25519 public keys (base64) trusted for WASM/plugin manifests.
+	RequireSignature bool     `yaml:"require_signature"`
+	TrustedKeys      []string `yaml:"trusted_keys"`
+	MaxWASMBytes     int64    `yaml:"max_wasm_bytes"`
+	WASMTimeout      Duration `yaml:"wasm_timeout"`
+	WASMMemoryPages  uint32   `yaml:"wasm_memory_pages"` // 64 KiB pages; 256 = 16 MiB
 }
 
 type MemoryConfig struct {

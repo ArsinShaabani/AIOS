@@ -135,7 +135,118 @@ Then ask the assistant something that matches the tool description; the
 - If your plugin needs secrets, read them from its own environment/secret store;
   AIOS does not pass credentials to plugins.
 
-## 7. Testing
+
+## 7. WASM plugins (sandboxed)
+
+AIOS can run plugins as **WASI commands** instead of HTTP services. The sandbox
+has no filesystem pre-opens, no environment variables and no network; only the
+JSON returned on stdout reaches the host. Memory (default 16 MiB) and wall-clock
+time (default 10 s) are bounded, and every invocation runs in a fresh runtime.
+
+### Guest ABI
+
+AIOS writes one JSON request to stdin and reads one JSON response from stdout:
+
+```json
+{"tool":"echo","arguments":{"text":"hi"},"user_id":"usr_…","session_id":"ses_…","agent_id":"agent_general","plugin":"wasm-echo"}
+```
+
+```json
+{"content":"echo: hi","data":{"length":2},"is_error":false}
+```
+
+Plain-text stdout is also accepted as `content`. Use the Go SDK
+([`sdk/wasmplugin`](../sdk/wasmplugin/wasmplugin.go)):
+
+```go
+package main
+
+import "github.com/ArsinShaabani/AIOS/sdk/wasmplugin"
+
+func main() {
+    wasmplugin.Serve(func(req wasmplugin.Request) wasmplugin.Response {
+        return wasmplugin.Response{Content: "echo: " + wasmplugin.String(req.Arguments, "text", "")}
+    })
+}
+```
+
+Build the guest (Go 1.24+ supports WASI commands):
+
+```bash
+GOOS=wasip1 GOARCH=wasm go build -trimpath -o echo.wasm ./examples/plugins/wasm-echo
+```
+
+Manifest:
+
+```json
+{
+  "name": "wasm-echo",
+  "version": "1.0.0",
+  "kind": "wasm",
+  "tools": [{"name": "echo", "description": "Echo text", "parameters": {"type":"object","properties":{"text":{"type":"string"}},"required":["text"]}}],
+  "signature": "…base64 Ed25519…",
+  "wasm_sha256": "…hex…",
+  "wasm_size": 1234567
+}
+```
+
+Install by adding `wasm_module` (base64 of the `.wasm` file) to the same JSON and
+POSTing it to `/api/v1/plugins`. The module is stored under `plugins.dir/wasm/`
+with mode 0600, and its digest is re-verified on every boot.
+
+Limits: `plugins.max_wasm_bytes`, `wasm_timeout`, `wasm_memory_pages`,
+`max_response_bytes`. The guest cannot read files, open sockets or spawn
+processes; capabilities exist only through the returned response.
+
+## 8. Signing and the marketplace format
+
+Third-party plugins can be signed with **Ed25519**. The signature covers the
+canonical manifest (name, version, description, author, homepage, kind, sorted
+permissions, tools, module digest) and the raw WASM bytes. A signed manifest is a
+single JSON document that can be distributed as-is; the WASM file travels next
+to it.
+
+```bash
+aios plugin-keygen -out ./keys          # 0600 private key + .pub
+aios plugin-sign -key ./keys/plugin-signing.key \
+  -manifest echo.manifest.json -wasm echo.wasm -out echo.signed.json
+```
+
+Configure trust on the server:
+
+```yaml
+plugins:
+  allow_wasm: true
+  require_signature: true          # reject unsigned plugins
+  trusted_keys:
+    - <base64 public key from plugin-keygen>
+```
+
+Install:
+
+```bash
+WASM_B64=$(base64 -w0 echo.wasm)
+python3 - <<PY
+import json
+m=json.load(open("echo.signed.json")); m["wasm_module"]="$WASM_B64"
+print(json.dumps(m))
+PY
+# POST the produced JSON to /api/v1/plugins
+```
+
+Marketplace rules:
+
+- a package is `manifest.json` + optional `plugin.wasm` + optional README;
+- the signed manifest must contain `signature`, `wasm_sha256` and `wasm_size`;
+- consumers MUST verify against a trusted key before enabling;
+- version bumps require a new signature; changing tools, permissions or bytes
+  invalidates the old one;
+- the admin UI shows `verified` and the SHA-256 so operators can audit artifacts.
+
+Unsigned HTTP plugins remain supported when `require_signature` is false; signed
+HTTP manifests can bind a manifest to a publisher without shipping a module.
+
+## 9. Testing
 
 The e2e suite covers installation and invocation patterns. For local testing:
 

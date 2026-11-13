@@ -135,8 +135,12 @@ func Default() Config {
 			Enabled:          true,
 			Dir:              "./plugins",
 			AllowHTTP:        true,
+			AllowWASM:        true,
 			Timeout:          Duration(20e9),
 			MaxResponseBytes: 512 << 10,
+			MaxWASMBytes:     16 << 20,
+			WASMTimeout:      Duration(10e9),
+			WASMMemoryPages:  256,
 		},
 		Memory: MemoryConfig{
 			MaxShortTurns:    20,

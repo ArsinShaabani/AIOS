@@ -13,7 +13,7 @@ type PluginRepo struct{ db *DB }
 func NewPluginRepo(db *DB) *PluginRepo { return &PluginRepo{db: db} }
 
 const pluginCols = `id, name, version, description, author, homepage, kind, endpoint, permissions,
-	tools, manifest, enabled, verified, installed_at, updated_at`
+	tools, manifest, signature, wasm_sha256, wasm_size, enabled, verified, installed_at, updated_at`
 
 func scanPlugin(row rowScanner) (*domain.Plugin, error) {
 	var (
@@ -27,7 +27,7 @@ func scanPlugin(row rowScanner) (*domain.Plugin, error) {
 		updated   string
 	)
 	if err := row.Scan(&p.ID, &p.Name, &p.Version, &p.Description, &p.Author, &p.Homepage, &p.Kind, &p.Endpoint,
-		&perms, &tools, &manifest, &enabled, &verified, &installed, &updated); err != nil {
+		&perms, &tools, &manifest, &p.Signature, &p.WasmSHA256, &p.WasmSize, &enabled, &verified, &installed, &updated); err != nil {
 		return nil, err
 	}
 	p.Permissions = decodeStrings(perms)
@@ -48,16 +48,18 @@ func (r *PluginRepo) Upsert(ctx context.Context, p *domain.Plugin) error {
 	}
 	p.UpdatedAt = now
 	_, err := r.db.ExecContext(ctx, r.db.Rebind(`INSERT INTO plugins (`+pluginCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			name = excluded.name, version = excluded.version, description = excluded.description,
 			author = excluded.author, homepage = excluded.homepage, kind = excluded.kind,
 			endpoint = excluded.endpoint, permissions = excluded.permissions, tools = excluded.tools,
-			manifest = excluded.manifest, enabled = excluded.enabled, verified = excluded.verified,
+			manifest = excluded.manifest, signature = excluded.signature,
+			wasm_sha256 = excluded.wasm_sha256, wasm_size = excluded.wasm_size,
+			enabled = excluded.enabled, verified = excluded.verified,
 			updated_at = excluded.updated_at`),
 		p.ID, p.Name, p.Version, p.Description, p.Author, p.Homepage, p.Kind, p.Endpoint,
-		jsonSliceText(p.Permissions), jsonText(p.Tools), string(p.Manifest), b2i(p.Enabled), b2i(p.Verified),
-		ft(p.InstalledAt), ft(p.UpdatedAt))
+		jsonSliceText(p.Permissions), jsonText(p.Tools), string(p.Manifest), p.Signature,
+		p.WasmSHA256, p.WasmSize, b2i(p.Enabled), b2i(p.Verified), ft(p.InstalledAt), ft(p.UpdatedAt))
 	return mapErr("plugin.upsert", err)
 }
 

@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"strings"
@@ -21,17 +22,31 @@ func (a *API) handleListPlugins(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *API) handleInstallPlugin(w http.ResponseWriter, r *http.Request) {
-	var p domain.Plugin
-	if err := decodeJSON(w, r, &p); err != nil {
+	var req struct {
+		domain.Plugin
+		WasmModule string `json:"wasm_module"`
+	}
+	if err := decodeJSON(w, r, &req); err != nil {
 		a.fail(w, r, err)
 		return
 	}
-	installed, err := a.Plugins.Install(r.Context(), &p)
+	var wasm []byte
+	if req.WasmModule != "" {
+		decoded, err := base64.StdEncoding.DecodeString(req.WasmModule)
+		if err != nil {
+			a.fail(w, r, platform.Invalid("plugin.wasm_base64", "wasm_module must be base64-encoded"))
+			return
+		}
+		wasm = decoded
+	}
+	installed, err := a.Plugins.InstallModule(r.Context(), &req.Plugin, wasm)
 	if err != nil {
 		a.fail(w, r, err)
 		return
 	}
-	a.Auditor.Log(r.Context(), userFrom(r.Context()).ID, "user", "plugin.install", "plugin", installed.ID, "success", clientIP(r), r.UserAgent(), map[string]any{"name": installed.Name})
+	a.Auditor.Log(r.Context(), userFrom(r.Context()).ID, "user", "plugin.install", "plugin", installed.ID,
+		"success", clientIP(r), r.UserAgent(), map[string]any{"name": installed.Name, "kind": installed.Kind,
+			"verified": installed.Verified})
 	writeJSON(w, http.StatusCreated, installed)
 }
 

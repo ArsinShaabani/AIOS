@@ -65,14 +65,15 @@ Full stack (Postgres/Redis/Qdrant/Ollama/Whisper/Piper):
 | Devices: MQTT, HTTP, capability validation, telemetry | ✅ |
 | Home Assistant, navigation, email, reminders/automations | ✅ |
 | Voice: VAD, Whisper, Piper/Edge/OpenAI TTS, wake word, barge-in | ✅ |
-| Plugins: manifest + HTTP tools, permissions, allow-list | ✅ |
+| Plugins: HTTP tools + WASM sandbox (wazero) + permissions | ✅ |
+| Plugin supply chain: Ed25519 signatures, trusted keys, marketplace manifest | ✅ |
 | Security: JWT + refresh rotation, RBAC, audit, AES-GCM, SSRF guard | ✅ |
 | Admin SPA, Prometheus metrics, health, audit | ✅ |
 | Docker (multi-arch), compose profiles, systemd, CI/release | ✅ |
 | Postgres / Redis / Qdrant adapters | ✅ (opt-in) |
 | Queue visibility timeout + stale task reclaim | ✅ |
 | PostgreSQL integration tests in CI | ✅ |
-| Test coverage | ✅ 80%+ enforced in CI (currently ~80.1%; see [DESIGN.md](docs/DESIGN.md#7-test-strategy)) |
+| Test coverage | ✅ 80%+ enforced in CI (currently ~80.2%; see [DESIGN.md](docs/DESIGN.md#7-test-strategy)) |
 
 Roadmap, MVP definition and risks: [docs/DESIGN.md](docs/DESIGN.md).
 

@@ -119,6 +119,11 @@ embedded with the configured embedder (local hash embeddings by default).
 
 - `PATCH /api/v1/plugins/{id}` `{enabled}`; `DELETE /api/v1/plugins/{id}`.
 
+WASM plugins use the same endpoint with `"kind": "wasm"` plus
+`"wasm_module": "<base64 .wasm>"`; signed artifacts also carry `signature`,
+`wasm_sha256` and `wasm_size`. When `plugins.require_signature` is enabled, only
+manifests signed by a key in `plugins.trusted_keys` are accepted.
+
 ## Settings, admin and errors
 
 - `GET /api/v1/settings?scope=global|user`; `PUT/DELETE /api/v1/settings/{key}`.
