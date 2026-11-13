@@ -41,6 +41,42 @@ PURGE=0
 log()  { printf '\033[1;34m[aios]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[aios]\033[0m %s\n' "$*" >&2; }
 die()  { printf '\033[1;31m[aios]\033[0m %s\n' "$*" >&2; exit 1; }
+# update_bootstrap_credentials rewrites security.bootstrap.email/password inside
+# an existing config without touching the rest of the file (and without requiring
+# PyYAML). Used when the installer runs again with new credentials.
+update_bootstrap_credentials() {
+  local file="$1" email="$2" pass="$3" tmp
+  [[ -f "$file" ]] || return 1
+  tmp="$(mktemp)"
+  # Walk the YAML with a tiny state machine: locate `security:`, then its
+  # `bootstrap:` child, then replace the `email:`/`password:` keys at that depth.
+  awk -v email="$email" -v pass="$pass" '
+    function indent(s,   i) { i = 0; while (substr(s, i+1, 1) == " ") i++; return i }
+    {
+      line = $0
+      match(line, /^[ ]*/); ind = RLENGTH
+      trimmed = substr(line, ind + 1)
+      if (trimmed ~ /^[A-Za-z_]+:/) {
+        key = trimmed; sub(/:.*/, "", key)
+        if (ind == 0) { in_sec = (key == "security"); in_boot = 0 }
+        else if (in_sec && ind == 2) { in_boot = (key == "bootstrap"); boot_ind = ind }
+      }
+      if (in_sec && in_boot && ind > boot_ind) {
+        if (trimmed ~ /^email:/) {
+          printf "%*semail: \"%s\"\n", ind, "", email; next
+        }
+        if (trimmed ~ /^password:/) {
+          printf "%*spassword: \"%s\"\n", ind, "", pass; next
+        }
+      }
+      print line
+    }
+  ' "$file" > "$tmp" || { rm -f "$tmp"; return 1; }
+  grep -q "^    password: \"$pass\"" "$tmp" || { rm -f "$tmp"; return 1; }
+  cat "$tmp" > "$file"
+  rm -f "$tmp"
+  return 0
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -76,6 +112,27 @@ if [[ $REPAIR -eq 1 ]]; then
   if command -v runuser >/dev/null; then
     runuser -u "$APP_USER" -- test -r "$CONF_DIR/config.yaml" || die "still unreadable for $APP_USER"
     runuser -u "$APP_USER" -- test -w "$DATA_DIR" || die "data dir not writable for $APP_USER"
+  fi
+  # Optionally rotate the bootstrap credentials while repairing.
+  if [[ -n "$ADMIN_PASSWORD" ]]; then
+    if [[ ${#ADMIN_PASSWORD} -lt 12 ]]; then
+      die "--admin-password must be at least 12 characters in production mode"
+    fi
+    update_bootstrap_credentials "$CONF_DIR/config.yaml" "$ADMIN_EMAIL" "$ADMIN_PASSWORD" \
+      || die "cannot update credentials in $CONF_DIR/config.yaml"
+    printf '%s\n' "$ADMIN_PASSWORD" > "$CONF_DIR/admin-password.txt"
+    chmod 0600 "$CONF_DIR/admin-password.txt"
+    log "bootstrap credentials updated"
+  fi
+  # Surface a precise reason before restarting (e.g. short password, bad CORS).
+  if [[ -x "$BIN" ]] && ! runuser -u "$APP_USER" -- "$BIN" doctor -config "$CONF_DIR/config.yaml" >/tmp/aios-doctor.out 2>&1; then
+    warn "config check failed:"
+    tail -12 /tmp/aios-doctor.out
+    echo >&2
+    echo "Hint: 'production requires security.bootstrap.password with >=12 chars'" >&2
+    echo "      means the stored password is too short. Re-run with" >&2
+    echo "      --admin-password '<12+ characters>' or set a new one in $CONF_DIR/config.yaml." >&2
+    die "fix the issues above, then run --repair again"
   fi
   log "permissions repaired; restarting service"
   systemctl reset-failed aios >/dev/null 2>&1 || true
@@ -199,7 +256,11 @@ if [[ -z "$ADMIN_PASSWORD" ]]; then
 else
   GENERATED_PASSWORD=0
 fi
-[[ ${#ADMIN_PASSWORD} -ge 8 ]] || die "admin password must be at least 8 characters"
+# Production mode enforces >= 12 characters on the bootstrap password, so reject
+# short secrets up front instead of leaving the service in a crash loop.
+if [[ ${#ADMIN_PASSWORD} -lt 12 ]]; then
+  die "admin password must be at least 12 characters (got ${#ADMIN_PASSWORD}); production mode rejects shorter secrets. Example: '${ADMIN_PASSWORD}!x'"
+fi
 APASSWORD_FILE="$CONF_DIR/admin-password.txt"
 
 if [[ ! -f "$CONF_DIR/config.yaml" ]]; then
@@ -329,7 +390,9 @@ events:
 YAML
   log "wrote configuration"
 else
-  log "keeping existing $CONF_DIR/config.yaml"
+  log "updating credentials in existing $CONF_DIR/config.yaml"
+  update_bootstrap_credentials "$CONF_DIR/config.yaml" "$ADMIN_EMAIL" "$ADMIN_PASSWORD" \
+    || die "cannot update $CONF_DIR/config.yaml; run with --repair or edit it manually"
 fi
 # Always (re)apply ownership/permissions: the service runs as $APP_USER, so a
 # config left as root:root 0640 would make the daemon fail to start.
