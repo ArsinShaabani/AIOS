@@ -55,7 +55,15 @@ func TestRedisQueue(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("delayed job not promoted")
 	}
-	stats, err := q.Stats(ctx)
+	var stats ports.QueueStats
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		stats, err = q.Stats(ctx)
+		if err == nil && stats.Processed >= 2 {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
 	if err != nil || stats.Processed < 2 {
 		t.Fatalf("stats: %v %+v", err, stats)
 	}

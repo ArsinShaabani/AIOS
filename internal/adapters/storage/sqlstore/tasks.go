@@ -121,6 +121,18 @@ func (r *TaskRepo) Fail(ctx context.Context, id string, errMsg string, retryAt t
 	return mapErr("task.fail", err)
 }
 
+// ReclaimStale returns tasks stuck in "running" (e.g. a crashed worker) to the
+// pending state. Attempts are preserved so retry limits still apply.
+func (r *TaskRepo) ReclaimStale(ctx context.Context, startedBefore time.Time) (int, error) {
+	res, err := r.db.ExecContext(ctx, r.db.Rebind(`UPDATE tasks SET status = 'pending', started_at = NULL
+		WHERE status = 'running' AND started_at IS NOT NULL AND started_at < ?`), ft(startedBefore))
+	if err != nil {
+		return 0, mapErr("task.reclaim", err)
+	}
+	n, _ := res.RowsAffected()
+	return int(n), nil
+}
+
 // Get loads one task.
 func (r *TaskRepo) Get(ctx context.Context, id string) (*domain.Task, error) {
 	row := r.db.QueryRowContext(ctx, r.db.Rebind(`SELECT `+taskCols+` FROM tasks WHERE id = ?`), id)

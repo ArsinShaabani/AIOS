@@ -24,10 +24,12 @@ type Redis struct {
 	workers     int
 	maxAttempts int
 	pollEvery   time.Duration
+	visibility  time.Duration
 	handlers    map[string]ports.JobHandler
 	mu          sync.RWMutex
 	processed   atomic.Int64
 	failed      atomic.Int64
+	reclaimed   atomic.Int64
 	running     atomic.Int64
 	cancel      context.CancelFunc
 	wg          sync.WaitGroup
@@ -59,12 +61,17 @@ func NewRedis(cfg config.QueueConfig, cacheCfg config.RedisConfig, prefix string
 	if prefix == "" {
 		prefix = "aios"
 	}
+	visibility := cfg.VisibilityTimeout.Std()
+	if visibility <= 0 {
+		visibility = 60 * time.Second
+	}
 	return &Redis{
 		client:      client,
 		prefix:      prefix + ":queue:",
 		workers:     max(cfg.Workers, 1),
 		maxAttempts: max(cfg.MaxAttempts, 3),
 		pollEvery:   maxDuration(cfg.PollInterval.Std(), 200*time.Millisecond),
+		visibility:  visibility,
 		handlers:    make(map[string]ports.JobHandler),
 		log:         log,
 	}, nil
@@ -73,6 +80,7 @@ func NewRedis(cfg config.QueueConfig, cacheCfg config.RedisConfig, prefix string
 func (q *Redis) jobsKey() string       { return q.prefix + "jobs" }
 func (q *Redis) processingKey() string { return q.prefix + "processing" }
 func (q *Redis) delayedKey() string    { return q.prefix + "delayed" }
+func (q *Redis) inflightKey() string   { return q.prefix + "inflight" }
 
 // Register binds a handler.
 func (q *Redis) Register(kind string, handler ports.JobHandler) {
@@ -106,12 +114,60 @@ func (q *Redis) Start(ctx context.Context) {
 		_ = q.client.Del(ctx, q.processingKey()).Err()
 		q.log.Warn("requeued orphaned redis jobs", "count", len(items))
 	}
+	// In-flight deadlines are meaningless after a restart.
+	_ = q.client.Del(ctx, q.inflightKey()).Err()
 
+	q.wg.Add(1)
+	go q.reclaimLoop(ctx)
 	q.wg.Add(1)
 	go q.promote(ctx)
 	for i := 0; i < q.workers; i++ {
 		q.wg.Add(1)
 		go q.worker(ctx)
+	}
+}
+
+// reclaimLoop returns jobs whose worker died or exceeded the visibility timeout
+// to the queue. Delivery is at-least-once; handlers must be idempotent.
+func (q *Redis) reclaimLoop(ctx context.Context) {
+	defer q.wg.Done()
+	interval := q.visibility / 2
+	if interval < 100*time.Millisecond {
+		interval = 100 * time.Millisecond
+	}
+	if interval > 5*time.Second {
+		interval = 5 * time.Second
+	}
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			q.reclaimStale(ctx)
+		}
+	}
+}
+
+func (q *Redis) reclaimStale(ctx context.Context) {
+	cutoff := time.Now().Add(-q.visibility).UnixMilli()
+	stale, err := q.client.ZRangeByScore(ctx, q.inflightKey(), &redis.ZRangeBy{
+		Min: "-inf", Max: itoa(cutoff), Count: 50,
+	}).Result()
+	if err != nil || len(stale) == 0 {
+		return
+	}
+	for _, raw := range stale {
+		if err := q.client.LRem(ctx, q.processingKey(), 1, raw).Err(); err != nil {
+			continue
+		}
+		if err := q.client.LPush(ctx, q.jobsKey(), raw).Err(); err != nil {
+			continue
+		}
+		q.client.ZRem(ctx, q.inflightKey(), raw)
+		q.reclaimed.Add(1)
+		q.log.Warn("reclaimed stale job after visibility timeout", "count", len(stale))
 	}
 }
 

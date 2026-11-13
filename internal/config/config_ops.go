@@ -52,6 +52,8 @@ type SchedulerConfig struct {
 	PollInterval  Duration `yaml:"poll_interval"`
 	MaxConcurrent int      `yaml:"max_concurrent"`
 	Timezone      string   `yaml:"timezone"`
+	// StaleAfter reclaims tasks left "running" by a crashed worker.
+	StaleAfter Duration `yaml:"stale_after"`
 }
 
 type ToolsConfig struct {

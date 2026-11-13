@@ -34,8 +34,16 @@ func New(tasks ports.TaskRepository, queue ports.Queue, cfg config.SchedulerConf
 	return &Service{tasks: tasks, queue: queue, cfg: cfg, log: log, stop: make(chan struct{})}
 }
 
-// Start begins polling.
+// Start begins polling. Tasks left running by a previous crash are reclaimed
+// first, so a restart never loses work.
 func (s *Service) Start(ctx context.Context) {
+	stale := s.cfg.StaleAfter.Std()
+	if stale <= 0 {
+		stale = 15 * time.Minute
+	}
+	if n, err := s.tasks.ReclaimStale(ctx, time.Now().Add(-stale)); err == nil && n > 0 {
+		s.log.Warn("reclaimed stale running tasks", "count", n, "older_than", stale.String())
+	}
 	interval := s.cfg.PollInterval.Std()
 	if interval <= 0 {
 		interval = 5 * time.Second

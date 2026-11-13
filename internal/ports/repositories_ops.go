@@ -65,6 +65,9 @@ type TaskRepository interface {
 	ClaimDue(ctx context.Context, now time.Time, limit int) ([]domain.Task, error)
 	Complete(ctx context.Context, id string, at time.Time) error
 	Fail(ctx context.Context, id string, errMsg string, retryAt time.Time, dead bool, at time.Time) error
+	// ReclaimStale returns tasks stuck in "running" after a worker crash to the
+	// pending state so another worker can pick them up.
+	ReclaimStale(ctx context.Context, startedBefore time.Time) (int, error)
 	Get(ctx context.Context, id string) (*domain.Task, error)
 	List(ctx context.Context, status string, page platform.Page) ([]domain.Task, int, error)
 	CountByStatus(ctx context.Context) (map[string]int, error)

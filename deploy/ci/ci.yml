@@ -12,6 +12,22 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: aios
+          POSTGRES_PASSWORD: aios
+          POSTGRES_DB: aios_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aios -d aios_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      AIOS_TEST_POSTGRES_DSN: postgres://aios:aios@localhost:5432/aios_test?sslmode=disable
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -24,6 +40,8 @@ jobs:
         run: go vet ./...
       - name: Tests (race)
         run: go test -race -count=1 ./internal/... ./tests/e2e/...
+      - name: PostgreSQL integration tests
+        run: go test -count=1 -run TestPostgresIntegration -v ./internal/adapters/storage/sqlstore/...
       - name: Merged coverage (de-duplicated)
         run: ./scripts/coverage.sh coverage.out
       - name: Coverage report

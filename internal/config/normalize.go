@@ -96,6 +96,9 @@ func (c *Config) Normalize() error {
 	if c.Scheduler.Timezone == "" {
 		c.Scheduler.Timezone = "UTC"
 	}
+	if c.Scheduler.StaleAfter <= 0 {
+		c.Scheduler.StaleAfter = Duration(15 * time.Minute)
+	}
 	if c.Observability.SystemStatsEvery <= 0 {
 		c.Observability.SystemStatsEvery = Duration(30 * time.Second)
 	}

@@ -100,7 +100,7 @@ deadlines everywhere, token-budgeted context, streaming, GOGC tuning.
 | Phase | Scope |
 |---|---|
 | 1.1 | Keep coverage above 80% as the suite grows; OpenAPI-generated client; SSE reconnect |
-| 1.2 | Postgres/Redis integration test suites; queue visibility-timeout tests |
+| 1.2 | ✅ Postgres/Redis integration suites; queue visibility timeout + stale-task reclaim |
 | 1.3 | Plugin signing + WASM sandbox (wazero); marketplace manifest format |
 | 1.4 | Voice: openWakeWord adapter, Silero VAD, OPUS transport, per-user voices |
 | 1.5 | Multi-instance device sessions; authenticated MQTT chat bridge |
@@ -132,7 +132,7 @@ deadlines everywhere, token-budgeted context, streaming, GOGC tuning.
 - **Load:** `tests/load` drives a running instance with configurable concurrency,
   reports p50/p95/p99 and fails above a 5% error rate.
 - **Gates:** `make cover` (atomic, `-coverpkg`) and `scripts/coverage-gate.sh`.
-  Current measured total is **80.2%** with a de-duplicated merged profile; the
+  Current measured total is **80.1%** with a de-duplicated merged profile; the
   gate enforces **80% overall and 80% per core package**.
 
 ## 8. Configuration precedence

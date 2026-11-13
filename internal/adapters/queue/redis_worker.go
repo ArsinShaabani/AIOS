@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/redis/go-redis/v9"
+
 	"github.com/ArsinShaabani/AIOS/internal/config"
 	"github.com/ArsinShaabani/AIOS/internal/platform"
 	"github.com/ArsinShaabani/AIOS/internal/ports"
@@ -26,6 +28,10 @@ func (q *Redis) worker(ctx context.Context) {
 			}
 			continue
 		}
+		// Track the in-flight deadline so a crashed worker's job is reclaimed.
+		_ = q.client.ZAdd(ctx, q.inflightKey(), redis.Z{
+			Score: float64(time.Now().UnixMilli()), Member: raw,
+		}).Err()
 		var job ports.Job
 		if err := json.Unmarshal([]byte(raw), &job); err != nil {
 			q.failed.Add(1)
@@ -45,6 +51,7 @@ func (q *Redis) worker(ctx context.Context) {
 		runErr := safeRun(ctx, handler, job)
 		q.running.Add(-1)
 		q.client.LRem(ctx, q.processingKey(), 1, raw)
+		q.client.ZRem(ctx, q.inflightKey(), raw)
 		if runErr == nil {
 			q.processed.Add(1)
 			continue

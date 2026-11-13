@@ -70,7 +70,9 @@ Full stack (Postgres/Redis/Qdrant/Ollama/Whisper/Piper):
 | Admin SPA, Prometheus metrics, health, audit | ✅ |
 | Docker (multi-arch), compose profiles, systemd, CI/release | ✅ |
 | Postgres / Redis / Qdrant adapters | ✅ (opt-in) |
-| Test coverage | ✅ 80.2% measured and enforced in CI (see [DESIGN.md](docs/DESIGN.md#7-test-strategy)) |
+| Queue visibility timeout + stale task reclaim | ✅ |
+| PostgreSQL integration tests in CI | ✅ |
+| Test coverage | ✅ 80%+ enforced in CI (currently ~80.1%; see [DESIGN.md](docs/DESIGN.md#7-test-strategy)) |
 
 Roadmap, MVP definition and risks: [docs/DESIGN.md](docs/DESIGN.md).
 

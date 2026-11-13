@@ -53,7 +53,7 @@ queue:
   driver: memory            # memory | redis
   workers: 2
   max_attempts: 3
-  visibility_timeout: 60s
+  visibility_timeout: 10m   # must exceed the longest job; stale jobs are reclaimed
   poll_interval: 500ms
 
 vector:
@@ -222,6 +222,7 @@ scheduler:
   poll_interval: 5s
   max_concurrent: 2
   timezone: UTC
+  stale_after: 15m            # reclaim tasks left running by a crashed worker
 
 tools:
   internet_enabled: true

@@ -48,7 +48,7 @@ func Default() Config {
 			Driver:            "memory",
 			Workers:           2,
 			MaxAttempts:       3,
-			VisibilityTimeout: Duration(60e9),
+			VisibilityTimeout: Duration(600e9),
 			PollInterval:      Duration(500e6),
 		},
 		Vector: VectorConfig{
@@ -158,6 +158,7 @@ func Default() Config {
 			PollInterval:  Duration(5e9),
 			MaxConcurrent: 2,
 			Timezone:      "UTC",
+			StaleAfter:    Duration(900e9),
 		},
 		Tools: ToolsConfig{
 			InternetEnabled:  true,
