@@ -56,6 +56,7 @@ type Config struct {
 	Scheduler     SchedulerConfig     `yaml:"scheduler"`
 	Tools         ToolsConfig         `yaml:"tools"`
 	RAG           RAGConfig           `yaml:"rag"`
+	Events        EventsConfig        `yaml:"events"`
 }
 
 type AppConfig struct {

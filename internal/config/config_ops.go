@@ -86,6 +86,15 @@ type ToolsConfig struct {
 	BlockPrivateIPs  bool     `yaml:"block_private_ips"`
 }
 
+// EventsConfig selects the domain-event transport. NATS enables horizontal
+// scaling: multiple gateway/brain instances share chat/device events.
+type EventsConfig struct {
+	Driver        string   `yaml:"driver"` // memory | nats
+	URL           string   `yaml:"url"`
+	SubjectPrefix string   `yaml:"subject_prefix"`
+	Timeout       Duration `yaml:"timeout"`
+}
+
 // RAGConfig controls document ingestion and retrieval.
 type RAGConfig struct {
 	Enabled          bool    `yaml:"enabled"`

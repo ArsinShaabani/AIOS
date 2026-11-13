@@ -3,11 +3,13 @@ package app
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/ArsinShaabani/AIOS/internal/config"
 	"github.com/ArsinShaabani/AIOS/internal/domain"
 	"github.com/ArsinShaabani/AIOS/internal/ports"
 )
@@ -66,12 +68,8 @@ func TestBusAndUsageRecorder(t *testing.T) {
 	bus := NewBus()
 	bus.Start(ctx)
 	events := make(chan ports.Event, 4)
-	bus.Subscribe("test.event", func(_ context.Context, evt ports.Event) {
-		events <- evt
-	})
-	bus.Subscribe("*", func(_ context.Context, evt ports.Event) {
-		// wildcard subscription must also fire
-	})
+	bus.Subscribe("test.event", func(_ context.Context, evt ports.Event) { events <- evt })
+	bus.Subscribe("*", func(_ context.Context, evt ports.Event) {})
 	bus.Publish(ctx, ports.Event{Name: "test.event", UserID: "u1", Payload: map[string]any{"x": 1}})
 	select {
 	case evt := <-events:
@@ -82,6 +80,19 @@ func TestBusAndUsageRecorder(t *testing.T) {
 		t.Fatal("event not delivered")
 	}
 	bus.Stop()
+
+	// Event bus factory: memory works, unreachable NATS fails fast.
+	memoryBus, err := newEventBus(ctx, config.EventsConfig{Driver: "memory"}, slog.Default())
+	if err != nil || memoryBus == nil {
+		t.Fatalf("memory bus: %v", err)
+	}
+	memoryBus.Start(ctx)
+	memoryBus.Publish(ctx, ports.Event{Name: "x"})
+	memoryBus.Stop()
+	if _, err := newEventBus(ctx, config.EventsConfig{Driver: "nats", URL: "nats://127.0.0.1:1",
+		SubjectPrefix: "aios", Timeout: config.Duration(time.Second)}, slog.Default()); err == nil {
+		t.Fatal("unreachable NATS accepted")
+	}
 
 	a, err := New(context.Background(), testConfig(t), nil, "test")
 	if err != nil {

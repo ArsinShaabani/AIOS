@@ -183,6 +183,12 @@ func Default() Config {
 			UserAgent:        "AIOS/1.0 (+https://github.com/ArsinShaabani/AIOS)",
 			BlockPrivateIPs:  true,
 		},
+		Events: EventsConfig{
+			Driver:        "memory",
+			URL:           "nats://127.0.0.1:4222",
+			SubjectPrefix: "aios.events",
+			Timeout:       Duration(5e9),
+		},
 		RAG: RAGConfig{
 			Enabled:          true,
 			MaxDocumentBytes: 2 << 20,

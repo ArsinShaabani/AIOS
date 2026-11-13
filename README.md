@@ -75,7 +75,8 @@ Full stack (Postgres/Redis/Qdrant/Ollama/Whisper/Piper):
 | Postgres / Redis / Qdrant adapters | ✅ (opt-in) |
 | Queue visibility timeout + stale task reclaim | ✅ |
 | PostgreSQL integration tests in CI | ✅ |
-| Test coverage | ✅ 80%+ enforced in CI (currently ~80.7%; see [DESIGN.md](docs/DESIGN.md#7-test-strategy)) |
+| Event bus: in-memory or NATS (horizontal scaling) | ✅ |
+| Test coverage | ✅ 80%+ enforced in CI (currently ~80.6%; see [DESIGN.md](docs/DESIGN.md#7-test-strategy)) |
 
 Roadmap, MVP definition and risks: [docs/DESIGN.md](docs/DESIGN.md).
 

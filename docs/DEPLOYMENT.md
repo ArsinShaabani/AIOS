@@ -76,7 +76,24 @@ Recommended Pi settings: 64-bit OS for arm64, `gpu_mem=16`, swap 512 MB, and
 `memory.max_tokens: 512`, `memory.retrieval_top_k: 3`, `queue.workers: 1` in
 config. A 1.5B quantised Ollama model is the practical ceiling on a Pi 4.
 
-## 6. Full stack (larger host)
+## 6. Event bus (NATS) for multi-instance deployments
+
+The in-memory bus is ideal for a single box. When several AIOS processes share
+work, point them at NATS so chat/device/reminder events are exchanged reliably:
+
+```yaml
+events:
+  driver: nats
+  url: nats://127.0.0.1:4222
+  subject_prefix: aios.events
+  timeout: 5s
+```
+
+NATS reconnects automatically; `/readyz` reports `events` as degraded when the
+connection is down. Redis remains responsible for cache/queue, NATS only carries
+events.
+
+## 7. Full stack (larger host)
 
 `deploy/docker-compose.full.yml` starts Postgres, Redis, Qdrant, Ollama,
 faster-whisper and a Wyoming Piper container, then wires AIOS to them:
@@ -94,7 +111,7 @@ Notes:
   `edge_http`/`openai` in this profile.
 - Postgres migrations are the same files; no code changes are required.
 
-## 7. Reverse proxy and TLS
+## 8. Reverse proxy and TLS
 
 Terminate TLS at Caddy/Nginx and proxy to `127.0.0.1:8080`. Requirements:
 - forward `X-Forwarded-For` (trusted only from loopback by AIOS);
@@ -115,7 +132,7 @@ In production set `server.cors_origins` to the exact origin, `server.tls` or a
 proxy for HTTPS, and a 32+ byte `security.jwt_secret` (or rely on auto-generated
 keys in `data/keys`).
 
-## 8. Backups and upgrades
+## 9. Backups and upgrades
 
 - SQLite: `sqlite3 data/aios.db ".backup '/backup/aios-$(date +%F).db'"` (WAL-safe).
 - Postgres: `pg_dump -Fc aios > backup.dump`.
@@ -124,7 +141,7 @@ keys in `data/keys`).
 - Upgrade: stop, replace binary/image, start. Migrations run automatically and
   are forward-only. Tagged releases publish checksums and multi-arch images.
 
-## 9. Operations checklist
+## 10. Operations checklist
 
 | Task | Command / endpoint |
 |---|---|
@@ -139,7 +156,7 @@ keys in `data/keys`).
 | Rotate a device token | `POST /api/v1/devices/{id}/rotate-token` |
 | Revoke sessions | `POST /api/v1/admin/users/{id}/revoke-tokens` |
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 | Symptom | Fix |
 |---|---|

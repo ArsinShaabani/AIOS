@@ -191,6 +191,18 @@ func (c *Config) Validate() error {
 			add("rag.min_score must be within [0,1]")
 		}
 	}
+	switch c.Events.Driver {
+	case "memory":
+	case "nats":
+		if c.Events.URL == "" {
+			add("events.url is required for the nats event bus")
+		}
+	default:
+		add("events.driver must be memory or nats")
+	}
+	if strings.ContainsAny(c.Events.SubjectPrefix, " >*") || c.Events.SubjectPrefix == "" {
+		add("events.subject_prefix must be a concrete NATS subject prefix")
+	}
 	if c.Plugins.MaxWASMBytes <= 0 {
 		c.Plugins.MaxWASMBytes = 16 << 20
 	}

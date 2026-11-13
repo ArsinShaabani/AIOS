@@ -26,10 +26,12 @@ type Subscriber interface {
 	Subscribe(name string, handler func(ctx context.Context, event Event))
 }
 
-// EventBus combines both directions.
+// EventBus combines both directions and lifecycle management.
 type EventBus interface {
 	Publisher
 	Subscriber
+	Start(ctx context.Context)
+	Stop()
 }
 
 // Clock exists so tests can freeze time without sleeping.

@@ -153,5 +153,17 @@ func (c *Config) Normalize() error {
 	if c.RAG.MinScore <= 0 {
 		c.RAG.MinScore = 0.2
 	}
+	if c.Events.Driver == "" {
+		c.Events.Driver = "memory"
+	}
+	if c.Events.URL == "" {
+		c.Events.URL = "nats://127.0.0.1:4222"
+	}
+	if c.Events.SubjectPrefix == "" {
+		c.Events.SubjectPrefix = "aios.events"
+	}
+	if c.Events.Timeout <= 0 {
+		c.Events.Timeout = Duration(5 * time.Second)
+	}
 	return nil
 }

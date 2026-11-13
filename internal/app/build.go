@@ -15,6 +15,7 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/llm"
 	"github.com/ArsinShaabani/AIOS/internal/memory"
 	"github.com/ArsinShaabani/AIOS/internal/personality"
+	"github.com/ArsinShaabani/AIOS/internal/platform"
 	"github.com/ArsinShaabani/AIOS/internal/plugins"
 	"github.com/ArsinShaabani/AIOS/internal/security"
 	"github.com/ArsinShaabani/AIOS/internal/tools"
@@ -90,6 +91,12 @@ func (a *App) initAPI() error {
 	a.Health.Add("queue", func(ctx context.Context) error {
 		_, err := a.Queue.Stats(ctx)
 		return err
+	})
+	a.Health.Add("events", func(ctx context.Context) error {
+		if conn, ok := a.Bus.(interface{ Connected() bool }); ok && !conn.Connected() {
+			return platform.Unavailable("events.disconnected", "event bus is disconnected")
+		}
+		return nil
 	})
 	return nil
 }

@@ -260,3 +260,9 @@ rag:
   embed_batch: 16
   min_score: 0.2
 
+events:
+  driver: memory            # memory | nats
+  url: nats://127.0.0.1:4222
+  subject_prefix: aios.events
+  timeout: 5s
+

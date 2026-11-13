@@ -105,7 +105,8 @@ than duplicating text.
 - **Transport:** implement `DeviceTransport` (MQTT, HTTP, rosbridge, TCP…).
 - **Store:** implement repository ports; SQL variants share migrations.
 - **Event consumer:** subscribe to `chat.completed`, `device.telemetry`,
-  `reminder.fired`; the bus can later be bridged to NATS without touching producers.
+  `reminder.fired`; the bus is swappable between in-memory and NATS without
+  touching producers.
 
 ## 7. Observability
 

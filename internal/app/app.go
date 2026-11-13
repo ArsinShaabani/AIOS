@@ -63,7 +63,7 @@ type App struct {
 	MQTTTransport *mqtt.Transport
 	MQTTBridge    *mqttbridge.Bridge
 
-	Bus     *Bus
+	Bus     ports.EventBus
 	Metrics *observability.Metrics
 	System  *observability.SystemMonitor
 	Health  *observability.Health
@@ -82,10 +82,15 @@ func New(ctx context.Context, cfg config.Config, log *slog.Logger, version strin
 		log = slog.Default()
 	}
 	a := &App{
-		Config: cfg, Log: log, Version: version, Bus: NewBus(),
+		Config: cfg, Log: log, Version: version,
 		Metrics: observability.NewMetrics(), System: observability.NewSystemMonitor(),
 		Health: observability.NewHealth(version), started: time.Now(),
 	}
+	bus, err := newEventBus(ctx, cfg.Events, log)
+	if err != nil {
+		return nil, err
+	}
+	a.Bus = bus
 	a.Metrics.SetBuild(version, runtime.Version())
 	for _, dir := range []string{cfg.App.DataDir, filepath.Join(cfg.App.DataDir, "keys")} {
 		if err := os.MkdirAll(dir, 0o750); err != nil {
