@@ -106,9 +106,57 @@ sudo ./deploy/install.sh --local-binary ./aios --admin-password '...'
 Air-gapped hosts: copy the release asset (`aios-linux-amd64` / `-arm64`) and its
 `.sha256`, then use `--local-binary`.
 
+## Troubleshooting
+
+### `permission denied` reading `/etc/aios/config.yaml` (crash loop)
+
+The service runs as the unprivileged `aios` user, so the config must be readable
+by that user's group. Fixed installs look like this:
+
+```
+drwxr-x--- root aios /etc/aios
+-rw-r----- root aios /etc/aios/config.yaml
+```
+
+Repair an existing install (no download, no data loss):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ArsinShaabani/AIOS/main/deploy/install.sh \
+  | sudo bash -s -- --repair
+```
+
+Or fix it manually:
+
+```bash
+sudo bash -c 'g=$(id -gn aios); install -d -m 0750 -o root -g "$g" /etc/aios; \
+  chown root:"$g" /etc/aios/config.yaml; chmod 0640 /etc/aios/config.yaml; \
+  install -d -m 0750 -o aios -g "$g" /var/lib/aios; \
+  systemctl reset-failed aios; systemctl restart aios; sleep 3; \
+  systemctl is-active aios; journalctl -u aios -n 15 --no-pager'
+```
+
+### Service starts then exits
+
+```bash
+sudo journalctl -u aios -n 50 --no-pager
+sudo -u aios /usr/local/bin/aios doctor -config /etc/aios/config.yaml
+```
+
+`doctor` prints the failing check (database, config, vector, queue, providers).
+
+### Dashboard unreachable from outside
+
+The port is open locally (`curl -s localhost:8080/healthz`) but not from the
+internet: allow it in the provider firewall/security group, or front it with
+nginx on 443 (see the nginx section above).
+
 ## Uninstall
 
 ```bash
-sudo ./deploy/install.sh --uninstall          # keeps data
-sudo ./deploy/install.sh --uninstall --purge  # removes data + user
+# keeps data and config
+sudo bash -s -- --uninstall </dev/null   # via fetched install.sh
+sudo ./deploy/install.sh --uninstall     # via a local checkout
+
+# also removes /var/lib/aios, /etc/aios and the aios user
+sudo ./deploy/install.sh --uninstall --purge
 ```

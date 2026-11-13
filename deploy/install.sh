@@ -35,6 +35,7 @@ PROVIDER="local"
 MODEL="local-template"
 USE_SYSTEMD=1
 UNINSTALL=0
+REPAIR=0
 PURGE=0
 
 log()  { printf '\033[1;34m[aios]\033[0m %s\n' "$*"; }
@@ -54,11 +55,44 @@ while [[ $# -gt 0 ]]; do
     --no-systemd)     USE_SYSTEMD=0; shift ;;
     --uninstall)      UNINSTALL=1; shift ;;
     --purge)          PURGE=1; shift ;;
+    --repair)         REPAIR=1; shift ;;
     -h|--help)        sed -n '2,20p' "$0"; exit 0 ;;
     *) die "unknown flag: $1" ;;
   esac
 done
 [[ $EUID -eq 0 ]] || die "run as root (sudo)"
+
+# --- repair mode: fix permissions on an existing install and restart ---------
+if [[ $REPAIR -eq 1 ]]; then
+  id -u "$APP_USER" >/dev/null 2>&1 || die "service user $APP_USER does not exist; run the installer normally"
+  APP_GROUP="$(id -gn "$APP_USER")"
+  log "repairing ownership for user $APP_USER (group $APP_GROUP)"
+  install -d -m 0750 -o "$APP_USER" -g "$APP_GROUP" "$DATA_DIR"
+  install -d -m 0750 -o root -g "$APP_GROUP" "$CONF_DIR"
+  [[ -f "$CONF_DIR/config.yaml" ]] || die "$CONF_DIR/config.yaml is missing; run the installer normally"
+  chown root:"$APP_GROUP" "$CONF_DIR/config.yaml"
+  chmod 0640 "$CONF_DIR/config.yaml"
+  [[ -f "$DATA_DIR/aios.db" ]] && { chown "$APP_USER":"$APP_GROUP" "$DATA_DIR/aios.db"* || true; }
+  if command -v runuser >/dev/null; then
+    runuser -u "$APP_USER" -- test -r "$CONF_DIR/config.yaml" || die "still unreadable for $APP_USER"
+    runuser -u "$APP_USER" -- test -w "$DATA_DIR" || die "data dir not writable for $APP_USER"
+  fi
+  log "permissions repaired; restarting service"
+  systemctl reset-failed aios >/dev/null 2>&1 || true
+  systemctl restart aios
+  sleep 3
+  if systemctl is-active --quiet aios; then
+    log "aios is running"
+    PORT="$(sed -n 's/^  addr: .*:\([0-9]\+\)$/\1/p' "$CONF_DIR/config.yaml" | head -1)"
+    PORT="${PORT:-8080}"
+    curl -fsS "http://127.0.0.1:$PORT/healthz" || true
+    echo
+    log "open http://$(curl -fsS --max-time 5 https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}'):$PORT/"
+    exit 0
+  fi
+  journalctl -u aios -n 20 --no-pager || true
+  die "service still failing — see logs above"
+fi
 
 if [[ $UNINSTALL -eq 1 ]]; then
   log "stopping and removing AIOS"
@@ -98,9 +132,14 @@ if ! id -u "$APP_USER" >/dev/null 2>&1; then
     useradd --system --home-dir "$DATA_DIR" --shell /sbin/nologin "$APP_USER"
   fi
 fi
-install -d -m 0750 -o "$APP_USER" -g "$APP_USER" "$DATA_DIR"
-# Config is owned by root but group-readable by the service user.
-install -d -m 0750 -o root -g "$APP_USER" "$CONF_DIR"
+# Resolve the actual primary group: it is not guaranteed to equal the username.
+APP_GROUP="$(id -gn "$APP_USER")"
+log "service user: $APP_USER, primary group: $APP_GROUP"
+install -d -m 0750 -o "$APP_USER" -g "$APP_GROUP" "$DATA_DIR"
+# Config is owned by root but readable by the service user's *primary group*.
+# The group name is resolved from the user, because `useradd --system` may pick a
+# different group name than the username on some distributions.
+install -d -m 0750 -o root -g "$APP_GROUP" "$CONF_DIR"
 port_busy() {
   if command -v ss >/dev/null; then
     ss -ltn 2>/dev/null | awk '{print $4}' | grep -q ":$1$"
@@ -294,7 +333,7 @@ else
 fi
 # Always (re)apply ownership/permissions: the service runs as $APP_USER, so a
 # config left as root:root 0640 would make the daemon fail to start.
-chown root:"$APP_USER" "$CONF_DIR/config.yaml"
+chown root:"$APP_GROUP" "$CONF_DIR/config.yaml"
 chmod 0640 "$CONF_DIR/config.yaml"
 printf '%s\n' "$ADMIN_PASSWORD" > "$APASSWORD_FILE"
 chown root:root "$APASSWORD_FILE" 2>/dev/null || true
