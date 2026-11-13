@@ -58,6 +58,39 @@ journalctl -u aios -f
 4. Optional engines (voice, NATS, Redis, Qdrant, Postgres) live in
    `deploy/docker-compose.full.yml`.
 
+## Local model (Ollama)
+
+AIOS ships a deterministic template model so the API works without credentials.
+For real answers install Ollama and point AIOS at it:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ArsinShaabani/AIOS/main/deploy/setup-ollama.sh -o /tmp/setup-ollama.sh
+sudo bash /tmp/setup-ollama.sh                 # picks a model that fits the RAM
+sudo bash /tmp/setup-ollama.sh --model qwen2.5:3b
+sudo bash /tmp/setup-ollama.sh --status
+```
+
+The script installs Ollama, pulls one model, rewrites only the `llm:` section of
+`/etc/aios/config.yaml` (backup kept, owner/mode preserved), restarts AIOS and
+verifies the model answers before reporting success.
+
+Model guidance for CPU-only hosts (no GPU):
+
+| RAM | Model | Notes |
+| --- | --- | --- |
+| 1–2 GB | `qwen2.5:0.5b` | fastest, short answers |
+| 2–4 GB | `qwen2.5:1.5b` | good default for a small VPS |
+| 4–8 GB | `qwen2.5:3b` | noticeably better reasoning |
+| 8 GB+ | `qwen2.5:7b` | best quality, slowest on CPU |
+
+Ollama exposes an OpenAI-compatible API under `/v1`; AIOS normalizes
+`base_url` automatically, so `http://127.0.0.1:11434` is enough. Keep
+`max_concurrency: 1` on a single-core box: one generation already saturates the
+CPU, and parallel requests only add latency and memory pressure.
+
+Streaming, tools and memory work the same as with a hosted provider. Models
+below ~3B follow tool calls unreliably; keep agents simple on very small hosts.
+
 ## Publish behind nginx (script)
 
 `deploy/setup-nginx.sh` writes a working vhost, chooses a certificate that
