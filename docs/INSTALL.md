@@ -108,6 +108,18 @@ Air-gapped hosts: copy the release asset (`aios-linux-amd64` / `-arm64`) and its
 
 ## Troubleshooting
 
+### `production requires security.bootstrap.password with >=12 chars` (crash loop)
+
+Production mode rejects bootstrap passwords shorter than 12 characters. The
+installer now refuses them up front; on an existing install either rotate the
+password or use a longer one:
+
+```bash
+# rotate to a 12+ character password (also fixes permissions)
+curl -fsSL https://github.com/ArsinShaabani/AIOS/releases/latest/download/install.sh -o /tmp/aios.sh
+sudo bash /tmp/aios.sh --repair --admin-password 'a-long-new-password'
+```
+
 ### `permission denied` reading `/etc/aios/config.yaml` (crash loop)
 
 The service runs as the unprivileged `aios` user, so the config must be readable
