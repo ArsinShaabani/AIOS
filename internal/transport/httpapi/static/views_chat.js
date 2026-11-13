@@ -107,6 +107,14 @@
           } else if (ev.type === "done") {
             meta.textContent = [ev.agent, ev.provider, ev.model].filter(Boolean).join(" · ");
             if (ev.usage) meta.textContent += " · " + (ev.usage.total_tokens || 0) + " tokens";
+            if (ev.notice) {
+              meta.textContent += " · ⚠ fallback";
+              toast(ev.notice, "bad");
+              const warn = document.createElement("div");
+              warn.className = "meta";
+              warn.textContent = "⚠ " + ev.notice + " — check the model provider (aios llm test).";
+              assistant.appendChild(warn);
+            }
           } else if (ev.type === "error") {
             toast(ev.error || "Generation failed", "bad");
             if (first) { body.textContent = "⚠ " + (ev.error || "Generation failed"); first = false; }

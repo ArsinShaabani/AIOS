@@ -177,6 +177,7 @@ func (r *Router) Providers() []ports.ProviderSummary {
 			Capabilities: p.Capabilities(),
 			Healthy:      healthy,
 			Breaker:      brState,
+			LastError:    r.lastErr[name],
 		})
 	}
 	return out

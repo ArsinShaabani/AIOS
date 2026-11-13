@@ -58,6 +58,36 @@ journalctl -u aios -f
 4. Optional engines (voice, NATS, Redis, Qdrant, Postgres) live in
    `deploy/docker-compose.full.yml`.
 
+## Diagnosing the model layer
+
+If chat answers with the built-in template text ("I'm running AIOS' built-in
+local template model..."), the request fell back because the configured
+provider failed. AIOS now reports this instead of hiding it: the API returns
+`degraded: true`, a `notice` naming both providers, and the chat UI shows a
+warning next to the message.
+
+Run the diagnostics as the service user:
+
+```bash
+sudo -u aios /usr/local/bin/aios llm test -config /etc/aios/config.yaml
+```
+
+It builds every configured provider, pings each one and sends a real
+completion, printing the exact URL and error, for example:
+
+```
+provider ollama (models: qwen2.5:1.5b)
+  ✗ ping failed: ollama.network: provider unreachable:
+      Get "http://127.0.0.1:11434/v1/models": dial tcp 127.0.0.1:11434: connect: connection refused
+```
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| `connect: connection refused` | Ollama is not running | `systemctl status ollama` / `ollama serve` |
+| `model not found` | model not pulled | `ollama pull qwen2.5:1.5b` |
+| `404` on `/v1/chat/completions` | AIOS older than v1.0.3 | upgrade |
+| first token takes minutes | model too large for RAM | pick a smaller model |
+
 ## Local model (Ollama)
 
 AIOS ships a deterministic template model so the API works without credentials.

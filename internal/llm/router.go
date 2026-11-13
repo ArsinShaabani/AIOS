@@ -41,6 +41,7 @@ type Router struct {
 	obs       Observer
 	log       *slog.Logger
 	mu        sync.RWMutex
+	lastErr   map[string]string
 }
 
 var _ ports.ModelRouter = (*Router)(nil)
@@ -60,6 +61,7 @@ func NewRouter(cfg config.LLMConfig, providers map[string]ports.Provider, cache 
 		usage:     usage,
 		obs:       obs,
 		log:       log,
+		lastErr:   make(map[string]string),
 	}
 	for _, pc := range cfg.Providers {
 		r.pcfg[pc.Name] = pc

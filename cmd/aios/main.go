@@ -35,6 +35,8 @@ func main() {
 		runSeed(args)
 	case "doctor":
 		runDoctor(args)
+	case "llm":
+		runLLMTest(args)
 	case "config":
 		runConfig(args)
 	case "hash-password":
@@ -65,6 +67,7 @@ Commands:
   migrate         Apply database migrations and exit
   seed            Create presets, agents and the bootstrap administrator
   doctor          Check configuration and dependencies
+  llm test        Diagnose model providers (ping + real completion)
   config          Print the effective configuration as YAML
   hash-password   Hash a password for manual seeding
   plugin-keygen   Generate an Ed25519 plugin signing key pair

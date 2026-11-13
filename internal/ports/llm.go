@@ -59,6 +59,8 @@ type ChatResponse struct {
 	ToolCalls    []domain.ToolCall `json:"tool_calls,omitempty"`
 	FinishReason string            `json:"finish_reason"`
 	Usage        Usage             `json:"usage"`
+	// FallbackFrom names the preferred provider when a fallback answered.
+	FallbackFrom string `json:"fallback_from,omitempty"`
 }
 
 // Chunk is one streamed delta. Exactly one of Delta/ToolCalls/Err is expected.
@@ -67,6 +69,7 @@ type Chunk struct {
 	ToolCalls []domain.ToolCall `json:"tool_calls,omitempty"`
 	Done      bool              `json:"done"`
 	Usage     *Usage            `json:"usage,omitempty"`
+	Provider  string            `json:"provider,omitempty"`
 	Err       error             `json:"-"`
 }
 
@@ -127,4 +130,5 @@ type ProviderSummary struct {
 	Capabilities Capabilities `json:"capabilities"`
 	Healthy      bool         `json:"healthy"`
 	Breaker      string       `json:"breaker"`
+	LastError    string       `json:"last_error,omitempty"`
 }

@@ -65,6 +65,8 @@ type Event struct {
 	Provider  string       `json:"provider,omitempty"`
 	Model     string       `json:"model,omitempty"`
 	Error     string       `json:"error,omitempty"`
+	Degraded  bool         `json:"degraded,omitempty"`
+	Notice    string       `json:"notice,omitempty"`
 }
 
 // EmitFunc receives streaming events. Returning an error aborts generation
@@ -84,4 +86,8 @@ type ChatOutput struct {
 	ToolCalls []domain.ToolCall `json:"tool_calls,omitempty"`
 	LatencyMS int64             `json:"latency_ms"`
 	Intent    string            `json:"intent"`
+	// Degraded is true when a fallback provider answered instead of the one
+	// the router selected (for example the local template because Ollama failed).
+	Degraded bool   `json:"degraded,omitempty"`
+	Notice   string `json:"notice,omitempty"`
 }

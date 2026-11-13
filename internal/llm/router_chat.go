@@ -8,6 +8,25 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/ports"
 )
 
+func (r *Router) recordProviderError(provider string, err error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.lastErr == nil {
+		r.lastErr = make(map[string]string)
+	}
+	if err == nil {
+		delete(r.lastErr, provider)
+		return
+	}
+	r.lastErr[provider] = err.Error()
+}
+
+func (r *Router) providerError(provider string) string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.lastErr[provider]
+}
+
 // Chat executes a completion with per-provider retries and route fallbacks.
 func (r *Router) Chat(ctx context.Context, d ports.RouteDecision, req ports.ChatRequest) (*ports.ChatResponse, error) {
 	applyDecision(&req, d)
@@ -15,6 +34,7 @@ func (r *Router) Chat(ctx context.Context, d ports.RouteDecision, req ports.Chat
 	if len(routes) == 0 {
 		return nil, platform.Unavailable("llm.no_provider", "no model provider is enabled")
 	}
+	primary := routes[0]
 	var lastErr error
 	for i, route := range routes {
 		br := r.breaker(route.Provider)
@@ -34,6 +54,17 @@ func (r *Router) Chat(ctx context.Context, d ports.RouteDecision, req ports.Chat
 			if r.obs != nil {
 				r.obs.ObserveLLM(route.Provider, route.Model, time.Since(start), nil)
 			}
+			// Report the provider that actually answered, and make a silent
+			// fallback visible to the caller (a template model answering while
+			// the request asked for a real model is a degraded response).
+			resp.Provider = route.Provider
+			if resp.Model == "" {
+				resp.Model = route.Model
+			}
+			if i > 0 {
+				resp.FallbackFrom = primary.Provider
+			}
+			r.recordProviderError(route.Provider, nil)
 			r.recordUsage(ctx, req, resp.Provider, resp.Model, "chat", resp.Usage, time.Since(start))
 			return resp, nil
 		}
@@ -43,6 +74,7 @@ func (r *Router) Chat(ctx context.Context, d ports.RouteDecision, req ports.Chat
 		if r.obs != nil {
 			r.obs.ObserveLLM(route.Provider, route.Model, time.Since(start), err)
 		}
+		r.recordProviderError(route.Provider, err)
 		lastErr = err
 		r.log.Warn("llm route failed", "provider", route.Provider, "model", route.Model, "error", err)
 	}

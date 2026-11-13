@@ -21,6 +21,8 @@ type turnState struct {
 	history     []ports.ChatMessage
 	started     time.Time
 	emit        EmitFunc
+	degraded    bool
+	notice      string
 }
 
 // runTurn executes the model/tool loop and persists every step.
@@ -58,12 +60,32 @@ func (e *Engine) runTurn(ctx context.Context, st turnState) (*ChatOutput, error)
 			err   error
 		)
 		if st.input.Stream && st.emit != nil {
-			text, calls, u, err = e.streamCompletion(ctx, st.route, req, st.emit)
+			var used string
+			text, calls, u, used, err = e.streamCompletion(ctx, st.route, req, st.emit)
+			if used != "" {
+				if used != st.route.Provider {
+					st.degraded = true
+					st.notice = "preferred provider " + st.route.Provider + " failed; answered with " + used
+				}
+				st.route.Provider = used
+			}
 		} else {
 			var resp *ports.ChatResponse
 			resp, err = e.Router.Chat(ctx, st.route, req)
 			if resp != nil {
 				text, calls, u = resp.Content, resp.ToolCalls, resp.Usage
+				// The router may have answered from a fallback provider; report what
+				// actually ran instead of what was requested.
+				if resp.Provider != "" {
+					if resp.Provider != st.route.Provider {
+						st.degraded = true
+						st.notice = "preferred provider " + st.route.Provider + " failed; answered with " + resp.Provider
+					}
+					st.route.Provider = resp.Provider
+				}
+				if resp.Model != "" {
+					st.route.Model = resp.Model
+				}
 			}
 		}
 		usage.PromptTokens += u.PromptTokens
@@ -128,10 +150,12 @@ func (e *Engine) runTurn(ctx context.Context, st turnState) (*ChatOutput, error)
 		SessionID: st.session.ID, MessageID: lastMessageID, Content: finalContent.String(),
 		AgentID: st.agent.ID, AgentName: st.agent.Name, Provider: st.route.Provider, Model: st.route.Model,
 		Usage: usage, ToolCalls: allCalls, LatencyMS: time.Since(st.started).Milliseconds(), Intent: st.intent.Name,
+		Degraded: st.degraded, Notice: st.notice,
 	}
 	if st.emit != nil {
 		_ = st.emit(Event{Type: "done", SessionID: st.session.ID, MessageID: lastMessageID, Usage: &usage,
-			Agent: st.agent.ID, Provider: st.route.Provider, Model: st.route.Model})
+			Agent: st.agent.ID, Provider: st.route.Provider, Model: st.route.Model,
+			Degraded: st.degraded, Notice: st.notice})
 	}
 	if e.Events != nil {
 		e.Events.Publish(ctx, ports.Event{Name: "chat.completed", UserID: st.user.ID, SessionID: st.session.ID,

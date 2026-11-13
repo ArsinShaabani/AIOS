@@ -76,6 +76,9 @@ func (r *Router) Stream(ctx context.Context, d ports.RouteDecision, req ports.Ch
 					usage = *chunk.Usage
 					gotUsage = true
 				}
+				if chunk.Provider == "" {
+					chunk.Provider = route.Provider
+				}
 				if !send(chunk) {
 					release()
 					return
