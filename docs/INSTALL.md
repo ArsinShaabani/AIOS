@@ -58,6 +58,28 @@ journalctl -u aios -f
 4. Optional engines (voice, NATS, Redis, Qdrant, Postgres) live in
    `deploy/docker-compose.full.yml`.
 
+## Upgrading an existing install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ArsinShaabani/AIOS/main/deploy/install.sh -o /tmp/aios-install.sh
+sudo bash /tmp/aios-install.sh --upgrade
+```
+
+`--upgrade` replaces the binary and restarts the service; it leaves
+`/etc/aios/config.yaml`, the database and plugin data untouched. Without the
+flag the installer also keeps an existing config, and it never blanks the
+administrator password when `--admin-password` is omitted.
+
+If the installer itself is unusable on a host, replace the binary directly:
+
+```bash
+VER=v1.0.5
+curl -fsSL "https://github.com/ArsinShaabani/AIOS/releases/download/$VER/aios-linux-amd64" -o /tmp/aios
+sudo install -m 0755 /tmp/aios /usr/local/bin/aios
+sudo systemctl restart aios
+aios version
+```
+
 ## Diagnosing the model layer
 
 If chat answers with the built-in template text ("I'm running AIOS' built-in

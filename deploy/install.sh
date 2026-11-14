@@ -13,6 +13,7 @@
 #   --local-binary <path>   install from a local binary instead of GitHub
 #   --provider <name>       default LLM provider (default local; e.g. ollama)
 #   --model <name>          default model (e.g. qwen2.5:1.5b)
+#   --upgrade               replace the binary, keep config/data, restart service
 #   --no-systemd            install but do not start a service
 #   --uninstall             stop and remove AIOS (keeps /var/lib/aios unless --purge)
 set -euo pipefail
@@ -37,6 +38,7 @@ USE_SYSTEMD=1
 UNINSTALL=0
 REPAIR=0
 PURGE=0
+UPGRADE=0
 
 log()  { printf '\033[1;34m[aios]\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[aios]\033[0m %s\n' "$*" >&2; }
@@ -63,16 +65,28 @@ update_bootstrap_credentials() {
       }
       if (in_sec && in_boot && ind > boot_ind) {
         if (trimmed ~ /^email:/) {
-          printf "%*semail: \"%s\"\n", ind, "", email; next
+          if (email != "") {
+            printf "%*semail: \"%s\"\n", ind, "", email
+          } else {
+            print line
+          }
+          next
         }
         if (trimmed ~ /^password:/) {
-          printf "%*spassword: \"%s\"\n", ind, "", pass; next
+          if (pass != "") {
+            printf "%*spassword: \"%s\"\n", ind, "", pass
+          } else {
+            print line
+          }
+          next
         }
       }
       print line
     }
   ' "$file" > "$tmp" || { rm -f "$tmp"; return 1; }
-  grep -q "^    password: \"$pass\"" "$tmp" || { rm -f "$tmp"; return 1; }
+  if [[ -n "$pass" ]]; then
+    grep -q "^    password: \"$pass\"" "$tmp" || { rm -f "$tmp"; return 1; }
+  fi
   cat "$tmp" > "$file"
   rm -f "$tmp"
   return 0
@@ -92,6 +106,7 @@ while [[ $# -gt 0 ]]; do
     --uninstall)      UNINSTALL=1; shift ;;
     --purge)          PURGE=1; shift ;;
     --repair)         REPAIR=1; shift ;;
+    --upgrade)        UPGRADE=1; shift ;;
     -h|--help)        sed -n '2,20p' "$0"; exit 0 ;;
     *) die "unknown flag: $1" ;;
   esac
@@ -389,6 +404,10 @@ events:
   driver: memory
 YAML
   log "wrote configuration"
+elif [[ $UPGRADE -eq 1 ]]; then
+  log "upgrade: keeping $CONF_DIR/config.yaml unchanged"
+elif [[ -z "$ADMIN_PASSWORD" ]]; then
+  log "config exists and no --admin-password given: keeping credentials unchanged"
 else
   log "updating credentials in existing $CONF_DIR/config.yaml"
   update_bootstrap_credentials "$CONF_DIR/config.yaml" "$ADMIN_EMAIL" "$ADMIN_PASSWORD" \
