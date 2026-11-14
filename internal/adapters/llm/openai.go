@@ -61,14 +61,15 @@ func (o *OpenAI) Models() []string { return o.models }
 
 func (o *OpenAI) baseReq(req ports.ChatRequest) oaRequest {
 	body := oaRequest{
-		Model:       firstOr(req.Model, firstOr(o.firstModel(), "gpt-4o-mini")),
-		Messages:    toOAMessages(req.Messages),
-		Temperature: req.Temperature,
-		TopP:        req.TopP,
-		MaxTokens:   req.MaxTokens,
-		Tools:       toOpenAITools(req.Tools),
-		Stop:        req.Stop,
-		User:        req.User,
+		Model:           firstOr(req.Model, firstOr(o.firstModel(), "gpt-4o-mini")),
+		Messages:        toOAMessages(req.Messages),
+		Temperature:     req.Temperature,
+		TopP:            req.TopP,
+		MaxTokens:       req.MaxTokens,
+		Tools:           toOpenAITools(req.Tools),
+		Stop:            req.Stop,
+		User:            req.User,
+		ReasoningEffort: req.ReasoningEffort,
 	}
 	if req.ToolChoice != "" && len(body.Tools) > 0 {
 		body.ToolChoice = req.ToolChoice

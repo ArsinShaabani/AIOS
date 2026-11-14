@@ -118,18 +118,19 @@ type oaMessage struct {
 }
 
 type oaRequest struct {
-	Model          string           `json:"model"`
-	Messages       []oaMessage      `json:"messages"`
-	Temperature    float64          `json:"temperature,omitempty"`
-	TopP           float64          `json:"top_p,omitempty"`
-	MaxTokens      int              `json:"max_tokens,omitempty"`
-	Tools          []map[string]any `json:"tools,omitempty"`
-	ToolChoice     string           `json:"tool_choice,omitempty"`
-	Stream         bool             `json:"stream,omitempty"`
-	Stop           []string         `json:"stop,omitempty"`
-	User           string           `json:"user,omitempty"`
-	ResponseFormat map[string]any   `json:"response_format,omitempty"`
-	StreamOptions  map[string]any   `json:"stream_options,omitempty"`
+	Model           string           `json:"model"`
+	Messages        []oaMessage      `json:"messages"`
+	Temperature     float64          `json:"temperature,omitempty"`
+	TopP            float64          `json:"top_p,omitempty"`
+	MaxTokens       int              `json:"max_tokens,omitempty"`
+	Tools           []map[string]any `json:"tools,omitempty"`
+	ToolChoice      string           `json:"tool_choice,omitempty"`
+	Stream          bool             `json:"stream,omitempty"`
+	Stop            []string         `json:"stop,omitempty"`
+	User            string           `json:"user,omitempty"`
+	ResponseFormat  map[string]any   `json:"response_format,omitempty"`
+	ReasoningEffort string           `json:"reasoning_effort,omitempty"`
+	StreamOptions   map[string]any   `json:"stream_options,omitempty"`
 }
 
 type oaResponse struct {

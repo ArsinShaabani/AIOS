@@ -40,7 +40,18 @@ type ChatInput struct {
 	PersonalityID string         `json:"personality_id,omitempty"`
 	Channel       domain.Channel `json:"channel,omitempty"`
 	Stream        bool           `json:"stream,omitempty"`
+	Options       *ChatOptions   `json:"options,omitempty"`
 	Metadata      map[string]any `json:"metadata,omitempty"`
+}
+
+// ChatOptions lets a client tune one turn without changing global settings.
+// Zero values mean "use the routed provider/model defaults".
+type ChatOptions struct {
+	MaxTokens       int      `json:"max_tokens,omitempty"`
+	Temperature     *float64 `json:"temperature,omitempty"`
+	TopP            *float64 `json:"top_p,omitempty"`
+	ContextWindow   int      `json:"context_window,omitempty"`
+	ReasoningEffort string   `json:"reasoning_effort,omitempty"`
 }
 
 // ToolEvent describes a tool invocation inside a stream.

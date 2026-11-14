@@ -131,3 +131,20 @@ MIT — see [LICENSE](LICENSE).
   instructions; per-browser default character.
 - **Settings**: dark/light/system theme, accent color, font size, density, motion,
   account and data export. All personalization is stored locally.
+
+## What's new in v1.2
+
+- **Per-provider/model limits**: `max_tokens`, `context_window`, `temperature`,
+  `top_p`, `reasoning_effort` — fixes truncated answers on large models. Chat can
+  override them per message (⚙). Message ceiling raised to 200k characters.
+- **Model discovery**: “Fetch models from provider” after adding an API key
+  (OpenAI-compatible, Ollama, Anthropic, Gemini). Free/no-key presets included:
+  Ollama, LM Studio, llama.cpp, vLLM, Pollinations; free tiers: Groq, Gemini,
+  OpenRouter `:free`, Mistral, Cerebras, Hugging Face, DeepSeek.
+- **Skills & Agents**: 12 installable skill templates with prompts, tool
+  allow-lists and routing keywords; full editor in the UI.
+- **Chat**: file/image attachments, sandboxed **code → preview** (HTML/CSS/JS/SVG/
+  Markdown), character gallery picker, advanced options, stop/regenerate.
+- **Appearance**: code font size, chat width + existing theme/accent/density.
+
+See [docs/V1.2.md](docs/V1.2.md).

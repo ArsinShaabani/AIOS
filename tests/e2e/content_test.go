@@ -83,7 +83,7 @@ func TestSessionsAndPromptPreview(t *testing.T) {
 	if status, _ := e.do("POST", "/api/v1/chat", e.token, map[string]any{"message": ""}); status != 400 {
 		t.Fatalf("empty message must be 400, got %d", status)
 	}
-	if status, _ := e.do("POST", "/api/v1/chat", e.token, map[string]any{"message": strings.Repeat("x", 12001)}); status != 400 {
+	if status, _ := e.do("POST", "/api/v1/chat", e.token, map[string]any{"message": strings.Repeat("x", 200001)}); status != 400 {
 		t.Fatalf("oversized message must be 400, got %d", status)
 	}
 }

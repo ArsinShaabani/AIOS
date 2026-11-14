@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ArsinShaabani/AIOS/internal/brain"
@@ -12,13 +13,21 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/platform"
 )
 
+type chatAttachment struct {
+	Name string `json:"name"`
+	MIME string `json:"mime"`
+	Text string `json:"text"`
+}
+
 type chatRequest struct {
-	Message       string `json:"message"`
-	SessionID     string `json:"session_id"`
-	AgentID       string `json:"agent_id"`
-	PersonalityID string `json:"personality_id"`
-	Channel       string `json:"channel"`
-	Stream        bool   `json:"stream"`
+	Message       string             `json:"message"`
+	SessionID     string             `json:"session_id"`
+	AgentID       string             `json:"agent_id"`
+	PersonalityID string             `json:"personality_id"`
+	Channel       string             `json:"channel"`
+	Stream        bool               `json:"stream"`
+	Options       *brain.ChatOptions `json:"options"`
+	Attachments   []chatAttachment   `json:"attachments"`
 }
 
 func (a *API) handleChat(w http.ResponseWriter, r *http.Request) {
@@ -27,8 +36,9 @@ func (a *API) handleChat(w http.ResponseWriter, r *http.Request) {
 		a.fail(w, r, err)
 		return
 	}
-	if len([]rune(req.Message)) > 12000 {
-		a.fail(w, r, platform.Invalid("chat.too_long", "message exceeds 12000 characters"))
+	message := composeMessage(req.Message, req.Attachments)
+	if len([]rune(message)) > 200000 {
+		a.fail(w, r, platform.Invalid("chat.too_long", "message exceeds 200000 characters"))
 		return
 	}
 	user := userFrom(r.Context())
@@ -40,7 +50,7 @@ func (a *API) handleChat(w http.ResponseWriter, r *http.Request) {
 	}
 	stream := req.Stream || wantStream(r)
 	input := brain.ChatInput{
-		UserID: user.ID, SessionID: req.SessionID, Message: req.Message,
+		UserID: user.ID, SessionID: req.SessionID, Message: message, Options: req.Options,
 		AgentID: req.AgentID, PersonalityID: req.PersonalityID, Channel: channel, Stream: stream,
 	}
 	if !stream {
@@ -205,4 +215,27 @@ func queryInt(r *http.Request, key string, fallback int) int {
 		return fallback
 	}
 	return n
+}
+
+// composeMessage folds text attachments into the prompt. Binary/vision inputs are
+// referenced by name only until a multimodal provider is configured.
+func composeMessage(text string, files []chatAttachment) string {
+	var b strings.Builder
+	b.WriteString(text)
+	for _, f := range files {
+		if strings.TrimSpace(f.Text) == "" {
+			continue
+		}
+		t := f.Text
+		if len(t) > 60000 {
+			t = t[:60000] + "\n...(truncated)"
+		}
+		b.WriteString("\n\n--- attached file: ")
+		b.WriteString(f.Name)
+		b.WriteString(" (")
+		b.WriteString(f.MIME)
+		b.WriteString(") ---\n")
+		b.WriteString(t)
+	}
+	return b.String()
 }

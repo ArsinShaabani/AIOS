@@ -44,8 +44,18 @@
       '<select id="c2-model" title="Model">' + (models.items.length
         ? models.items.map((m) => '<option value="' + esc(m.value) + '"' + (m.value === models.current ? " selected" : "") + ">" + esc(m.label) + "</option>").join("")
         : "<option>configure a provider</option>") + "</select>" +
+      '<button class="icon-btn" id="c2-char-pick" title="Choose character">👤</button>' +
+      '<button class="icon-btn" id="c2-attach" title="Attach file">📎</button>' +
+      '<button class="icon-btn" id="c2-opts" title="Advanced model options">⚙</button>' +
       '<span class="spacer"></span><span class="pill" id="c2-status">ready</span>' +
       '<button class="icon-btn" id="c2-voice" title="Voice">🎙</button></div>' +
+      '<div id="c2-files" class="chips"></div>' +
+      '<div id="c2-opts-panel" class="opts hidden"><div class="opt"><label>Max tokens</label><input id="opt-max" type="number" min="64" max="200000" step="64" placeholder="provider default"></div>' +
+      '<div class="opt"><label>Temperature</label><input id="opt-temp" type="number" min="0" max="2" step="0.05" placeholder="auto"></div>' +
+      '<div class="opt"><label>Context window</label><input id="opt-ctx" type="number" min="1024" max="2000000" step="1024" placeholder="model default"></div>' +
+      '<div class="opt"><label>Reasoning effort</label><select id="opt-effort"><option value="">auto</option><option value="low">low</option><option value="medium">medium</option><option value="high">high</option></select></div>' +
+      '<div class="opt"><button class="btn ghost sm" id="opt-reset">Reset</button></div></div>' +
+      '<input type="file" id="c2-file" multiple hidden accept="text/*,.md,.json,.csv,.py,.js,.ts,.go,.html,.css,.yml,.yaml,.sh,.sql,image/*">' +
       '<div class="msgs" id="c2-msgs"><div class="empty-chat"><div class="big">👋 Hi' +
       (state.user && state.user.display_name ? ", " + esc(state.user.display_name) : "") + "</div>" +
       '<div class="muted">Ask anything. Markdown, code blocks and tool runs are shown inline.</div><div class="suggest">' +
@@ -87,6 +97,95 @@
         onError: (e) => toast(e, "bad"),
       });
     });
+    // ---- attachments -------------------------------------------------
+    const fileInput = $("#c2-file");
+    $("#c2-attach").addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", () => addFiles(Array.from(fileInput.files || [])));
+    const dropZone = $("#c2-msgs");
+    ["dragover", "dragenter"].forEach((ev) => dropZone.addEventListener(ev, (e) => { e.preventDefault(); dropZone.classList.add("dragging"); }));
+    ["dragleave", "drop"].forEach((ev) => dropZone.addEventListener(ev, () => dropZone.classList.remove("dragging")));
+    dropZone.addEventListener("drop", (e) => { e.preventDefault(); addFiles(Array.from(e.dataTransfer.files || [])); });
+    input.addEventListener("paste", (e) => {
+      const items = Array.from((e.clipboardData && e.clipboardData.files) || []);
+      if (items.length) { e.preventDefault(); addFiles(items); }
+    });
+    function addFiles(files) {
+      files.slice(0, 6).forEach((f) => {
+        if (f.size > 5 * 1024 * 1024) { toast(f.name + " is larger than 5MB", "bad"); return; }
+        if (/^image\//.test(f.type)) {
+          C.files.push({ name: f.name, mime: f.type, text: "[image attached: " + f.name + ". A vision-capable model is required to inspect it.]" });
+          renderFiles();
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          C.files.push({ name: f.name, mime: f.type || "text/plain", text: String(reader.result || "").slice(0, 200000) });
+          renderFiles();
+        };
+        reader.onerror = () => toast("Cannot read " + f.name, "bad");
+        reader.readAsText(f);
+      });
+    }
+    function renderFiles() {
+      const bar = $("#c2-files");
+      if (!bar) return;
+      bar.innerHTML = C.files.map((f, i) =>
+        '<span class="chip">📎 ' + esc(f.name) + '<button data-rm="' + i + '" title="Remove">×</button></span>').join("");
+      bar.querySelectorAll("[data-rm]").forEach((b) => b.addEventListener("click", () => {
+        C.files.splice(Number(b.dataset.rm), 1); renderFiles();
+      }));
+    }
+    window.AIOSChatExtras = { renderFiles };
+
+    // ---- advanced options -------------------------------------------
+    const optsPanel = $("#c2-opts-panel");
+    const optFields = { max_tokens: "#opt-max", temperature: "#opt-temp", context_window: "#opt-ctx", reasoning_effort: "#opt-effort" };
+    function loadOpts() {
+      let o = {};
+      try { o = JSON.parse(localStorage.getItem("aios_chat_options") || "{}"); } catch (e) { o = {}; }
+      Object.entries(optFields).forEach(([k, sel]) => { if (o[k] != null) $(sel).value = o[k]; });
+    }
+    function saveOpts() {
+      const o = {};
+      Object.entries(optFields).forEach(([k, sel]) => { const v = $(sel).value; if (v !== "") o[k] = k === "reasoning_effort" ? v : Number(v); });
+      localStorage.setItem("aios_chat_options", JSON.stringify(o));
+      toast("Chat options saved", "ok");
+    }
+    loadOpts();
+    $("#c2-opts").addEventListener("click", () => optsPanel.classList.toggle("hidden"));
+    Object.values(optFields).forEach((sel) => $(sel).addEventListener("change", saveOpts));
+    $("#opt-reset").addEventListener("click", () => {
+      localStorage.removeItem("aios_chat_options");
+      Object.values(optFields).forEach((sel) => { $(sel).value = ""; });
+      toast("Options reset to model defaults", "ok");
+    });
+
+    // ---- character picker -------------------------------------------
+    async function openCharPicker() {
+      const pers = await loadPersonalities();
+      const cards = pers.map((p) => {
+        const emoji = X.charEmoji(p);
+        return '<button class="char-card' + (p.id === C.personality ? " active" : "") + '" data-pid="' + esc(p.id) + '">' +
+          '<span class="cc-avatar">' + emoji + '</span><span class="cc-name">' + esc(p.name) + '</span>' +
+          '<span class="cc-desc">' + esc(p.description || (p.tone || "") + " · " + (p.response_length || "")) + '</span>' +
+          '<span class="cc-traits">🎭 ' + esc(p.tone || "neutral") + ' · 😄 ' + (p.humor || 0) + '/10 · 💬 ' + esc(p.response_length || "medium") + '</span></button>';
+      }).join("");
+      A.modal('<div class="pv-head"><strong>Choose a character</strong><span><button class="btn ghost sm" id="cc-new">＋ New</button> ' +
+        '<button class="btn ghost sm" onclick="window.AIOS.closeModal()">Close</button></span></div>' +
+        '<div class="char-grid">' + (cards || '<p class="muted">No characters yet.</p>') + '</div>');
+      $$("#modal .char-card").forEach((card) => card.addEventListener("click", () => {
+        C.personality = card.dataset.pid;
+        const sel = $("#c2-char");
+        if (sel) sel.value = C.personality;
+        const chosen = pers.find((p) => p.id === C.personality);
+        if (chosen) toast("Character: " + chosen.name, "ok");
+        A.closeModal();
+      }));
+      const newBtn = $("#cc-new");
+      if (newBtn) newBtn.addEventListener("click", () => { A.closeModal(); A.navigate("character"); });
+    }
+    $("#c2-char-pick").addEventListener("click", openCharPicker);
+
     input.focus();
   };
 })();

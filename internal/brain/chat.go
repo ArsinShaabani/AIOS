@@ -18,8 +18,8 @@ func (e *Engine) Chat(ctx context.Context, in ChatInput, emit EmitFunc) (*ChatOu
 	if in.Message == "" {
 		return nil, platform.Invalid("chat.empty", "message must not be empty")
 	}
-	if len([]rune(in.Message)) > 12000 {
-		return nil, platform.Invalid("chat.too_long", "message exceeds 12000 characters")
+	if len([]rune(in.Message)) > 200000 {
+		return nil, platform.Invalid("chat.too_long", "message exceeds 200000 characters")
 	}
 	user, err := e.Users.GetByID(ctx, in.UserID)
 	if err != nil {
@@ -52,15 +52,42 @@ func (e *Engine) Chat(ctx context.Context, in ChatInput, emit EmitFunc) (*ChatOu
 	}
 	_ = e.Sessions.Touch(ctx, session.ID, 1, now)
 
+	route := e.Router.Resolve(agent.ID, intent.Name, in.Message)
+	ctxLimit := route.ContextWindow
+	if ctxLimit > 0 {
+		// Leave room for the completion and a small safety margin.
+		ctxLimit -= route.MaxTokens + 512
+		if ctxLimit < 1024 {
+			ctxLimit = 1024
+		}
+	}
+	if in.Options != nil {
+		if in.Options.MaxTokens > 0 {
+			route.MaxTokens = in.Options.MaxTokens
+		}
+		if in.Options.Temperature != nil {
+			route.Temperature = *in.Options.Temperature
+		}
+		if in.Options.TopP != nil {
+			route.TopP = *in.Options.TopP
+		}
+		if in.Options.ContextWindow > 0 {
+			ctxLimit = in.Options.ContextWindow - route.MaxTokens - 512
+			if ctxLimit < 1024 {
+				ctxLimit = 1024
+			}
+		}
+		if in.Options.ReasoningEffort != "" {
+			route.ReasoningEffort = in.Options.ReasoningEffort
+		}
+	}
 	built, err := e.Builder.Build(ctx, ContextInput{
 		User: user, Session: session, Personality: p, Agent: agent,
-		Query: in.Message, Intent: intent, Channel: channel,
+		Query: in.Message, Intent: intent, Channel: channel, MaxContextTokens: ctxLimit,
 	})
 	if err != nil {
 		return nil, err
 	}
-
-	route := e.Router.Resolve(agent.ID, intent.Name, in.Message)
 	if emit != nil {
 		if err := emit(Event{Type: "session", SessionID: session.ID, Agent: agent.ID, Provider: route.Provider, Model: route.Model}); err != nil {
 			return nil, err

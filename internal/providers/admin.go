@@ -24,7 +24,9 @@ func (s *Service) List(ctx context.Context) []View {
 	for _, p := range cfg.Providers {
 		v := View{Name: p.Name, Kind: p.Kind, BaseURL: p.BaseURL, DefaultModel: p.DefaultModel,
 			Enabled: p.IsEnabled(), Default: p.Name == cfg.DefaultProvider,
-			Priority: p.Priority, MaxConcurrency: p.MaxConcurrency}
+			Priority: p.Priority, MaxConcurrency: p.MaxConcurrency,
+			MaxTokens: p.MaxTokens, ContextWindow: p.ContextWindow,
+			Temperature: p.Temperature, TopP: p.TopP, ReasoningEffort: p.ReasoningEffort}
 		for _, m := range p.Models {
 			v.Models = append(v.Models, m.Name)
 		}
@@ -56,6 +58,17 @@ func (s *Service) Upsert(ctx context.Context, in Input) (View, error) {
 	if in.Kind != "ollama" && in.BaseURL == "" {
 		return View{}, platform.Invalid("provider.base_url", "base_url is required for "+in.Kind+" providers")
 	}
+	if in.MaxTokens < 0 || in.ContextWindow < 0 || in.MaxTokens > 2_000_000 || in.ContextWindow > 10_000_000 {
+		return View{}, platform.Invalid("provider.limits", "invalid token limits")
+	}
+	if in.Temperature < 0 || in.Temperature > 2 || in.TopP < 0 || in.TopP > 1 {
+		return View{}, platform.Invalid("provider.sampling", "temperature must be 0..2 and top_p 0..1")
+	}
+	switch in.ReasoningEffort {
+	case "", "low", "medium", "high":
+	default:
+		return View{}, platform.Invalid("provider.effort", "reasoning_effort must be low, medium or high")
+	}
 	models := dedupe(in.Models)
 	if in.DefaultModel == "" && len(models) > 0 {
 		in.DefaultModel = models[0]
@@ -76,7 +89,9 @@ func (s *Service) Upsert(ctx context.Context, in Input) (View, error) {
 	}
 	pc := config.ProviderConfig{Name: in.Name, Kind: in.Kind, BaseURL: in.BaseURL,
 		DefaultModel: in.DefaultModel, Enabled: &enabled, Priority: in.Priority,
-		MaxConcurrency: in.MaxConcurrency}
+		MaxConcurrency: in.MaxConcurrency, MaxTokens: in.MaxTokens,
+		ContextWindow: in.ContextWindow, Temperature: in.Temperature, TopP: in.TopP,
+		ReasoningEffort: in.ReasoningEffort}
 	for _, m := range models {
 		pc.Models = append(pc.Models, config.ModelConfig{Name: m})
 	}
@@ -121,7 +136,9 @@ func (s *Service) Upsert(ctx context.Context, in Input) (View, error) {
 	// Built inline: List() takes the same lock.
 	view := View{Name: pc.Name, Kind: pc.Kind, BaseURL: pc.BaseURL, DefaultModel: pc.DefaultModel,
 		Enabled: enabled, Default: cfg.DefaultProvider == pc.Name, Priority: pc.Priority,
-		MaxConcurrency: pc.MaxConcurrency, HasAPIKey: pc.APIKey != ""}
+		MaxConcurrency: pc.MaxConcurrency, HasAPIKey: pc.APIKey != "",
+		MaxTokens: pc.MaxTokens, ContextWindow: pc.ContextWindow, Temperature: pc.Temperature,
+		TopP: pc.TopP, ReasoningEffort: pc.ReasoningEffort}
 	for _, m := range pc.Models {
 		view.Models = append(view.Models, m.Name)
 	}

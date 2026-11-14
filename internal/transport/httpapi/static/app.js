@@ -135,7 +135,7 @@
       ["memory", "Memory", "❖"], ["documents", "Documents", "❐"], ["devices", "Devices", "◈"],
     ]},
     { group: "Intelligence", items: [
-      ["agents", "Agents", "✦"], ["models", "Model Router", "⇄"], ["usage", "Usage & Cost", "◷"],
+      ["agents", "Skills & Agents", "✦"], ["models", "Model Router", "⇄"], ["usage", "Usage & Cost", "◷"],
     ]},
     { group: "Platform", items: [
       ["plugins", "Plugins", "⧉"], ["queue", "Task Queue", "≣"], ["settings", "Settings", "⚙"],
@@ -208,7 +208,7 @@
   }
   const TITLES = {
     overview: "Overview", chat: "Chat", character: "Characters", sessions: "Sessions", memory: "Memory", documents: "Documents", devices: "Devices",
-    agents: "Agents", models: "Model Router", usage: "Usage & Cost", plugins: "Plugins",
+    agents: "Skills & Agents", models: "Model Router", usage: "Usage & Cost", plugins: "Plugins",
     queue: "Task Queue", settings: "Settings", users: "Users", logs: "Audit Log", system: "System",
   };
   function navigate(view) {

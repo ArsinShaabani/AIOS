@@ -91,6 +91,36 @@ func (r *Router) Resolve(agentID, intent, text string) ports.RouteDecision {
 		MaxTokens:   r.cfg.MaxTokens,
 		Reason:      "default",
 	}
+	// Provider/model defaults: context window, output cap and effort.
+	if pc, ok := r.pcfg[d.Provider]; ok {
+		if pc.Temperature > 0 {
+			d.Temperature = pc.Temperature
+		}
+		if pc.TopP > 0 {
+			d.TopP = pc.TopP
+		}
+		if pc.MaxTokens > 0 {
+			d.MaxTokens = pc.MaxTokens
+		}
+		if pc.ContextWindow > 0 {
+			d.ContextWindow = pc.ContextWindow
+		}
+		d.ReasoningEffort = pc.ReasoningEffort
+		for _, m := range pc.Models {
+			if m.Name != d.Model {
+				continue
+			}
+			if m.ContextWindow > 0 {
+				d.ContextWindow = m.ContextWindow
+			}
+			if m.MaxOutputTokens > 0 {
+				d.MaxTokens = m.MaxOutputTokens
+			}
+			if m.ReasoningEffort != "" {
+				d.ReasoningEffort = m.ReasoningEffort
+			}
+		}
+	}
 	lower := strings.ToLower(text)
 	for _, rule := range r.cfg.Routing {
 		if !r.ruleMatches(rule, agentID, intent, lower) {

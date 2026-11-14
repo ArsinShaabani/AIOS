@@ -40,18 +40,23 @@ type LLMConfig struct {
 }
 
 type ProviderConfig struct {
-	Name           string            `yaml:"name"`
-	Kind           string            `yaml:"kind"` // openai | anthropic | gemini | ollama
-	BaseURL        string            `yaml:"base_url"`
-	APIKey         string            `yaml:"api_key"`
-	DefaultModel   string            `yaml:"default_model"`
-	Enabled        *bool             `yaml:"enabled"`
-	Timeout        Duration          `yaml:"timeout"`
-	MaxConcurrency int               `yaml:"max_concurrency"`
-	Headers        map[string]string `yaml:"headers"`
-	Models         []ModelConfig     `yaml:"models"`
-	Priority       int               `yaml:"priority"`
-	EmbeddingDim   int               `yaml:"embedding_dim"`
+	Name            string            `yaml:"name"`
+	Kind            string            `yaml:"kind"` // openai | anthropic | gemini | ollama
+	BaseURL         string            `yaml:"base_url"`
+	APIKey          string            `yaml:"api_key"`
+	DefaultModel    string            `yaml:"default_model"`
+	Enabled         *bool             `yaml:"enabled"`
+	Timeout         Duration          `yaml:"timeout"`
+	MaxConcurrency  int               `yaml:"max_concurrency"`
+	Headers         map[string]string `yaml:"headers"`
+	Models          []ModelConfig     `yaml:"models"`
+	Priority        int               `yaml:"priority"`
+	EmbeddingDim    int               `yaml:"embedding_dim"`
+	Temperature     float64           `yaml:"temperature,omitempty"`
+	TopP            float64           `yaml:"top_p,omitempty"`
+	MaxTokens       int               `yaml:"max_tokens,omitempty"`
+	ContextWindow   int               `yaml:"context_window,omitempty"`
+	ReasoningEffort string            `yaml:"reasoning_effort,omitempty"`
 }
 
 // IsEnabled defaults to true when the flag is omitted.
@@ -66,6 +71,7 @@ type ModelConfig struct {
 	SupportsTools   *bool   `yaml:"supports_tools"`
 	SupportsVision  bool    `yaml:"supports_vision"`
 	SupportsStream  *bool   `yaml:"supports_stream"`
+	ReasoningEffort string  `yaml:"reasoning_effort,omitempty"`
 }
 
 func (m ModelConfig) Tools() bool  { return m.SupportsTools == nil || *m.SupportsTools }

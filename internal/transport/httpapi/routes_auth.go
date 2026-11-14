@@ -25,6 +25,8 @@ func (a *API) registerChatRoutes(mux *http.ServeMux) {
 
 func (a *API) registerDataRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/agents", a.authed(a.handleListAgents))
+	mux.HandleFunc("GET /api/v1/agents/catalog", a.authed(a.handleAgentCatalog))
+	mux.HandleFunc("POST /api/v1/agents/install", a.perm(securityPermAgentsWrite, a.handleInstallAgent))
 	mux.HandleFunc("POST /api/v1/agents", a.perm(securityPermAgentsWrite, a.handleUpsertAgent))
 	mux.HandleFunc("PUT /api/v1/agents/{id}", a.perm(securityPermAgentsWrite, a.handleUpsertAgent))
 	mux.HandleFunc("DELETE /api/v1/agents/{id}", a.perm(securityPermAgentsWrite, a.handleDeleteAgent))

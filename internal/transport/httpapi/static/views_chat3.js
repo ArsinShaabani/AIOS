@@ -6,7 +6,19 @@
   const V = (window.AIOSViews = window.AIOSViews || {});
   const MD = () => window.AIOSMarkdown || { render: (t) => esc(t) };
   const EMOJI = ["🤖", "🧠", "🦊", "🐼", "🚀", "🧙", "👩‍💻", "🕵️", "🌙", "⚡", "🌱", "🐙"];
-  const C = { sending: false, abort: null, session: null, lastUser: "", personality: "", model: "", sessions: [] };
+  const C = { sending: false, abort: null, session: null, lastUser: "", personality: "", model: "", sessions: [], files: [] };
+
+function chatOptions() {
+  try {
+    const o = JSON.parse(localStorage.getItem("aios_chat_options") || "{}");
+    const out = {};
+    if (o.temperature !== "" && o.temperature != null) out.temperature = Number(o.temperature);
+    if (o.max_tokens) out.max_tokens = Number(o.max_tokens);
+    if (o.context_window) out.context_window = Number(o.context_window);
+    if (o.reasoning_effort) out.reasoning_effort = o.reasoning_effort;
+    return out;
+  } catch (e) { return {}; }
+}
 
   function hash(s) { let h = 0; for (let i = 0; i < String(s).length; i++) h = (h * 31 + String(s).charCodeAt(i)) | 0; return h; }
   function charEmoji(p) {

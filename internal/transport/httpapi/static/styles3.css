@@ -218,3 +218,36 @@ a { color: var(--accent-2); }
 [data-theme="light"] .nav-item.active { color: var(--text); }
 [data-theme="light"] .badge, [data-theme="light"] .user-chip { background: var(--panel); border-color: var(--border); }
 .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation: none !important; transition: none !important; }
+
+/* v1.2: chat extras, code preview, skills */
+.cb-actions{display:flex;gap:6px}
+.cb-preview,.cb-copy{background:transparent;border:1px solid var(--border,#2a3550);color:inherit;border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer}
+.cb-preview:hover,.cb-copy:hover{border-color:var(--accent)}
+.pv-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.pv-frame{width:100%;height:min(72vh,760px);border:1px solid var(--border,#2a3550);border-radius:12px;background:#fff}
+.modal:has(.pv-frame){max-width:min(1100px,96vw);width:96vw}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 14px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel-2,#162033);border:1px solid var(--border,#2a3550);border-radius:999px;padding:4px 10px;font-size:12px}
+.chip button{background:none;border:0;color:inherit;cursor:pointer;font-size:14px;line-height:1}
+.opts{display:flex;flex-wrap:wrap;gap:14px;padding:12px 14px;margin:8px 0;border-top:1px solid var(--border,#2a3550);border-bottom:1px solid var(--border,#2a3550);background:rgba(255,255,255,.02)}
+.opts .opt{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted,#94a3b8)}
+.opts .opt input,.opts .opt select{background:var(--panel-2,#162033);border:1px solid var(--border,#2a3550);border-radius:8px;padding:6px 8px;color:inherit;width:130px}
+.char-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;max-height:70vh;overflow:auto}
+.char-card{text-align:left;display:flex;flex-direction:column;gap:6px;background:var(--panel-2,#162033);border:1px solid var(--border,#2a3550);border-radius:14px;padding:14px;cursor:pointer;color:inherit}
+.char-card:hover,.char-card.active{border-color:var(--accent);transform:translateY(-1px)}
+.cc-avatar{font-size:26px}
+.cc-name{font-weight:600}
+.cc-desc{font-size:12px;color:var(--muted,#94a3b8);min-height:32px}
+.cc-traits{font-size:11px;color:var(--muted,#94a3b8)}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px;max-height:180px;overflow:auto;border:1px solid var(--border,#2a3550);border-radius:10px;padding:10px}
+.tool-check{font-size:12px;display:flex;align-items:center;gap:6px}
+.search{width:100%;margin:8px 0 4px;background:var(--panel-2,#162033);border:1px solid var(--border,#2a3550);border-radius:10px;padding:10px 12px;color:inherit}
+#c2-msgs.dragging{outline:2px dashed var(--accent);outline-offset:-8px}
+.skill-card .top,.agent-card .top{display:flex;align-items:center;gap:8px}
+.skill-card .name,.agent-card .name{font-weight:600}
+.skill-card .models,.agent-card .models{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+
+/* prefs */
+.msg{max-width:var(--chat-max,900px)}
+.msg .bubble code,.codeblock pre code{font-size:var(--code-fs,12.5px)}

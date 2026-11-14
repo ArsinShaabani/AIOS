@@ -3,6 +3,7 @@ package httpapi
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/ArsinShaabani/AIOS/internal/agents"
 	"github.com/ArsinShaabani/AIOS/internal/domain"
@@ -170,4 +171,68 @@ func firstString(v, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// handleAgentCatalog lists installable skills and marks the installed ones.
+func (a *API) handleAgentCatalog(w http.ResponseWriter, r *http.Request) {
+	installed := map[string]bool{}
+	if list, err := a.Repos.Agents.List(r.Context(), false); err == nil {
+		for _, ag := range list {
+			installed[ag.ID] = true
+		}
+	}
+	items := agents.Catalog()
+	out := make([]map[string]any, 0, len(items))
+	for _, t := range items {
+		out = append(out, map[string]any{
+			"id": t.ID, "name": t.Name, "emoji": t.Emoji, "category": t.Category,
+			"description": t.Description, "system_prompt": t.SystemPrompt,
+			"tools": t.Tools, "keywords": t.Keywords,
+			"installed": installed["agent_skill_"+t.ID],
+		})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": out, "tools": a.Brain.Tools.Names()})
+}
+
+// handleInstallAgent turns a catalog template into an editable agent.
+func (a *API) handleInstallAgent(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		ID string `json:"id"`
+	}
+	if err := decodeJSON(w, r, &body); err != nil {
+		a.fail(w, r, err)
+		return
+	}
+	var tpl *agents.Template
+	for _, t := range agents.Catalog() {
+		if t.ID == body.ID {
+			copy := t
+			tpl = &copy
+			break
+		}
+	}
+	if tpl == nil {
+		a.fail(w, r, platform.NotFound("agent.template", "unknown skill template"))
+		return
+	}
+	id := "agent_skill_" + tpl.ID
+	ag, err := a.Repos.Agents.Get(r.Context(), id)
+	if err != nil {
+		ag = &domain.Agent{ID: id, CreatedAt: time.Now().UTC()}
+	}
+	ag.Name, ag.Description, ag.SystemPrompt = tpl.Name, tpl.Description, tpl.SystemPrompt
+	ag.Tools, ag.Keywords = tpl.Tools, tpl.Keywords
+	ag.Priority, ag.Enabled, ag.Builtin = 60, true, false
+	ag.OwnerID = userFrom(r.Context()).ID
+	ag.UpdatedAt = time.Now().UTC()
+	if err := agents.Validate(ag); err != nil {
+		a.fail(w, r, err)
+		return
+	}
+	if err := a.Repos.Agents.Upsert(r.Context(), ag); err != nil {
+		a.fail(w, r, err)
+		return
+	}
+	_ = a.Agents.Reload(r.Context())
+	writeJSON(w, http.StatusOK, ag)
 }

@@ -42,11 +42,12 @@ func (e *Engine) runTurn(ctx context.Context, st turnState) (*ChatOutput, error)
 
 	for iteration := 0; iteration < maxIterations; iteration++ {
 		req := ports.ChatRequest{
-			Messages:    history,
-			Temperature: st.route.Temperature,
-			TopP:        st.route.TopP,
-			MaxTokens:   st.route.MaxTokens,
-			Metadata:    map[string]string{"user_id": st.user.ID, "session_id": st.session.ID},
+			Messages:        history,
+			Temperature:     st.route.Temperature,
+			TopP:            st.route.TopP,
+			MaxTokens:       st.route.MaxTokens,
+			ReasoningEffort: st.route.ReasoningEffort,
+			Metadata:        map[string]string{"user_id": st.user.ID, "session_id": st.session.ID},
 		}
 		if iteration == 0 && len(specs) > 0 {
 			req.Tools = specs

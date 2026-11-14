@@ -18,7 +18,7 @@ func Default() Config {
 			WriteTimeout:    Duration(90e9),
 			IdleTimeout:     Duration(120e9),
 			ShutdownTimeout: Duration(20e9),
-			MaxBodyBytes:    1 << 20,
+			MaxBodyBytes:    8 << 20,
 			CORSOrigins:     []string{"*"},
 			EnableGraphQL:   true,
 			RateLimit: RateLimitConfig{

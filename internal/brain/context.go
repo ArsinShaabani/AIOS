@@ -22,6 +22,8 @@ type ContextInput struct {
 	Query       string
 	Intent      Intent
 	Channel     domain.Channel
+	// MaxContextTokens overrides the configured prompt budget for this turn.
+	MaxContextTokens int
 }
 
 // BuiltContext is the assembled prompt plus diagnostics for the prompt viewer.
@@ -48,6 +50,10 @@ func NewBuilder(mem *memory.Service, messages ports.MessageRepository, cfg confi
 
 // Build assembles system + memory + history for one turn.
 func (b *Builder) Build(ctx context.Context, in ContextInput) (*BuiltContext, error) {
+	budget := b.cfg.MaxContextTokens
+	if in.MaxContextTokens > 0 && in.MaxContextTokens < budget {
+		budget = in.MaxContextTokens
+	}
 	var memBlock strings.Builder
 	memIDs := make([]string, 0, 8)
 	if b.memory != nil && in.User != nil {
@@ -60,7 +66,7 @@ func (b *Builder) Build(ctx context.Context, in ContextInput) (*BuiltContext, er
 			memBlock.WriteString("Relevant memories about the user (use them naturally; do not recite them):\n")
 			used := 0
 			for _, m := range memories {
-				if used > b.cfg.MaxContextTokens/3*4 {
+				if used > budget/3*4 {
 					break
 				}
 				line := fmt.Sprintf("- [%s] %s\n", m.Kind, m.Content)
@@ -97,7 +103,7 @@ func (b *Builder) Build(ctx context.Context, in ContextInput) (*BuiltContext, er
 				history = append(history, ports.ChatMessage{Role: domain.MsgAssistant, Content: m.Content})
 			}
 		}
-		for len(history) > 0 && estimateTokens(system, history) > b.cfg.MaxContextTokens {
+		for len(history) > 0 && estimateTokens(system, history) > budget {
 			// Drop the oldest exchange (user + assistant) to protect the budget.
 			if len(history) > 1 {
 				history = history[2:]

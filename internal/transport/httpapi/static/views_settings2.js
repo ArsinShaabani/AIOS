@@ -23,6 +23,10 @@
       '<input type="range" min="12" max="18" value="' + p.fontSize + '" id="fs-range" style="max-width:180px;accent-color:var(--accent)"></div>' +
       '<div class="pref-row"><div><div class="lbl">Density</div><div class="sub">Spacing of cards</div></div>' +
       seg("density", p.density, ["compact", "default", "comfy"]) + "</div>" +
+      '<div class="pref-row"><div><div class="lbl">Code font size</div><div class="sub">' + (p.codeFontSize || 12.5) + 'px</div></div>' +
+      '<input type="range" min="11" max="18" step="0.5" value="' + (p.codeFontSize || 12.5) + '" id="cf-range" style="max-width:180px;accent-color:var(--accent)"></div>' +
+      '<div class="pref-row"><div><div class="lbl">Chat width</div><div class="sub">' + (p.chatWidth || 900) + 'px max bubble width</div></div>' +
+      '<input type="range" min="640" max="1200" step="20" value="' + (p.chatWidth || 900) + '" id="cw-range" style="max-width:180px;accent-color:var(--accent)"></div>' +
       '<div class="pref-row"><div><div class="lbl">Animations</div><div class="sub">Disable on slow devices</div></div>' +
       '<label class="switch"><input type="checkbox" id="motion"' + (p.motion ? " checked" : "") + "> enabled</label></div></div>";
   }
@@ -63,6 +67,8 @@
         $$("[data-seg='density'] button").forEach((b) => b.addEventListener("click", () => { P().set({ density: b.dataset.v }); show("appearance"); }));
         $$("#accent-sw .swatch").forEach((s) => s.addEventListener("click", () => { P().set({ accent: s.dataset.c }); show("appearance"); }));
         $("#fs-range").addEventListener("input", (e) => P().set({ fontSize: Number(e.target.value) }));
+        $("#cf-range").addEventListener("input", (e) => P().set({ codeFontSize: Number(e.target.value) }));
+        $("#cw-range").addEventListener("input", (e) => P().set({ chatWidth: Number(e.target.value) }));
         $("#motion").addEventListener("change", (e) => P().set({ motion: e.target.checked }));
       } else if (tab === "account") {
         $("#st-logout").addEventListener("click", () => A.logout());

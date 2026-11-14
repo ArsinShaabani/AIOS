@@ -37,18 +37,19 @@ type Usage struct {
 
 // ChatRequest is the provider-neutral completion request.
 type ChatRequest struct {
-	Model          string
-	Messages       []ChatMessage
-	Temperature    float64
-	TopP           float64
-	MaxTokens      int
-	Tools          []ToolSpec
-	ToolChoice     string // auto | none | required
-	Stream         bool
-	Stop           []string
-	User           string
-	ResponseFormat string // "" | "json"
-	Metadata       map[string]string
+	Model           string
+	Messages        []ChatMessage
+	Temperature     float64
+	TopP            float64
+	MaxTokens       int
+	ReasoningEffort string // low | medium | high (provider-specific)
+	Tools           []ToolSpec
+	ToolChoice      string // auto | none | required
+	Stream          bool
+	Stop            []string
+	User            string
+	ResponseFormat  string // "" | "json"
+	Metadata        map[string]string
 }
 
 // ChatResponse is a completed, non-streamed turn.
@@ -102,13 +103,15 @@ type Fallback struct {
 // RouteDecision is the router's answer for one request. The brain passes it to
 // ModelRouter.Chat/Stream so retries/fallbacks stay inside the model layer.
 type RouteDecision struct {
-	Provider    string     `json:"provider"`
-	Model       string     `json:"model"`
-	Temperature float64    `json:"temperature"`
-	TopP        float64    `json:"top_p"`
-	MaxTokens   int        `json:"max_tokens"`
-	Fallbacks   []Fallback `json:"fallbacks,omitempty"`
-	Reason      string     `json:"reason,omitempty"`
+	Provider        string     `json:"provider"`
+	Model           string     `json:"model"`
+	Temperature     float64    `json:"temperature"`
+	TopP            float64    `json:"top_p"`
+	MaxTokens       int        `json:"max_tokens"`
+	ContextWindow   int        `json:"context_window,omitempty"`
+	ReasoningEffort string     `json:"reasoning_effort,omitempty"`
+	Fallbacks       []Fallback `json:"fallbacks,omitempty"`
+	Reason          string     `json:"reason,omitempty"`
 }
 
 // ModelRouter resolves routes and executes completions with fallback, retry,

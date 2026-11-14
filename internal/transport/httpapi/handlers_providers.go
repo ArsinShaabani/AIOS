@@ -133,3 +133,32 @@ func (a *API) auditProvider(r *http.Request, action, target, id string, meta map
 	}
 	a.Auditor.Log(r.Context(), actor, "admin", action, target, id, "success", clientIP(r), r.UserAgent(), meta)
 }
+
+// handleDiscoverModels asks the provider for its model list using a draft or
+// stored config. With ?save=true the discovered list is persisted and applied.
+func (a *API) handleDiscoverModels(w http.ResponseWriter, r *http.Request) {
+	var in providers.Input
+	if err := decodeJSON(w, r, &in); err != nil {
+		a.fail(w, r, err)
+		return
+	}
+	models, err := a.Providers.Discover(r.Context(), in)
+	if err != nil {
+		a.fail(w, r, err)
+		return
+	}
+	resp := map[string]any{"models": models}
+	if r.URL.Query().Get("save") == "true" && in.Name != "" {
+		in.Models = models
+		if in.DefaultModel == "" {
+			in.DefaultModel = models[0]
+		}
+		view, err := a.Providers.Upsert(r.Context(), in)
+		if err != nil {
+			a.fail(w, r, err)
+			return
+		}
+		resp["provider"] = view
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
