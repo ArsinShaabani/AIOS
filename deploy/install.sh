@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# AIOS one-command installer for Linux (amd64 / arm64).
+# AIOS one-command installer for Linux (amd64 / arm64 / armv7).
 #
-#   curl -fsSL https://raw.githubusercontent.com/ArsinShaabani/AIOS/main/deploy/install.sh \
+#   curl -fsSL https://github.com/ArsinShaabani/AIOS/releases/latest/download/install.sh \
 #     | sudo bash -s -- --admin-password 'CHANGE_ME_STRONG'
 #
 # Flags:
