@@ -145,8 +145,9 @@ MIT — see [LICENSE](LICENSE).
 ## What's new in v1.2
 
 - **Per-provider/model limits**: `max_tokens`, `context_window`, `temperature`,
-  `top_p`, `reasoning_effort` — fixes truncated answers on large models. Chat can
-  override them per message (⚙). Message ceiling raised to 200k characters.
+  `top_p`, `reasoning_effort` — fixes truncated answers on large models. Chat only
+  exposes reasoning effort; token limits and sampling come from the provider.
+  Message ceiling raised to 200k characters.
 - **Model discovery**: “Fetch models from provider” after adding an API key
   (OpenAI-compatible, Ollama, Anthropic, Gemini). Free/no-key presets included:
   Ollama, LM Studio, llama.cpp, vLLM, Pollinations; free tiers: Groq, Gemini,

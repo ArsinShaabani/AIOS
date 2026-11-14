@@ -46,15 +46,10 @@
         : "<option>configure a provider</option>") + "</select>" +
       '<button class="icon-btn" id="c2-char-pick" title="Choose character">👤</button>' +
       '<button class="icon-btn" id="c2-attach" title="Attach file">📎</button>' +
-      '<button class="icon-btn" id="c2-opts" title="Advanced model options">⚙</button>' +
+      '<select id="c2-effort" class="effort-select" title="Reasoning effort"><option value="">effort: auto</option><option value="low">effort: low</option><option value="medium">effort: medium</option><option value="high">effort: high</option></select>' +
       '<span class="spacer"></span><span class="pill" id="c2-status">ready</span>' +
       '<button class="icon-btn" id="c2-voice" title="Voice">🎙</button></div>' +
       '<div id="c2-files" class="chips"></div>' +
-      '<div id="c2-opts-panel" class="opts hidden"><div class="opt"><label>Max tokens</label><input id="opt-max" type="number" min="64" max="200000" step="64" placeholder="provider default"></div>' +
-      '<div class="opt"><label>Temperature</label><input id="opt-temp" type="number" min="0" max="2" step="0.05" placeholder="auto"></div>' +
-      '<div class="opt"><label>Context window</label><input id="opt-ctx" type="number" min="1024" max="2000000" step="1024" placeholder="model default"></div>' +
-      '<div class="opt"><label>Reasoning effort</label><select id="opt-effort"><option value="">auto</option><option value="low">low</option><option value="medium">medium</option><option value="high">high</option></select></div>' +
-      '<div class="opt"><button class="btn ghost sm" id="opt-reset">Reset</button></div></div>' +
       '<input type="file" id="c2-file" multiple hidden accept="text/*,.md,.json,.csv,.py,.js,.ts,.go,.html,.css,.yml,.yaml,.sh,.sql,image/*">' +
       '<div class="msgs" id="c2-msgs"><div class="empty-chat"><div class="big">👋 Hi' +
       (state.user && state.user.display_name ? ", " + esc(state.user.display_name) : "") + "</div>" +
@@ -137,27 +132,18 @@
     }
     window.AIOSChatExtras = { renderFiles };
 
-    // ---- advanced options -------------------------------------------
-    const optsPanel = $("#c2-opts-panel");
-    const optFields = { max_tokens: "#opt-max", temperature: "#opt-temp", context_window: "#opt-ctx", reasoning_effort: "#opt-effort" };
-    function loadOpts() {
-      let o = {};
-      try { o = JSON.parse(localStorage.getItem("aios_chat_options") || "{}"); } catch (e) { o = {}; }
-      Object.entries(optFields).forEach(([k, sel]) => { if (o[k] != null) $(sel).value = o[k]; });
+    // ---- reasoning effort only (everything else comes from the provider) ----
+    const effortSel = $("#c2-effort");
+    function storedOptions() {
+      try { return JSON.parse(localStorage.getItem("aios_chat_options") || "{}"); } catch (e) { return {}; }
     }
-    function saveOpts() {
-      const o = {};
-      Object.entries(optFields).forEach(([k, sel]) => { const v = $(sel).value; if (v !== "") o[k] = k === "reasoning_effort" ? v : Number(v); });
+    effortSel.value = storedOptions().reasoning_effort || "";
+    effortSel.addEventListener("change", () => {
+      const o = storedOptions();
+      // Drop deprecated per-chat overrides so the provider/model config wins.
+      delete o.temperature; delete o.max_tokens; delete o.context_window;
+      if (effortSel.value) o.reasoning_effort = effortSel.value; else delete o.reasoning_effort;
       localStorage.setItem("aios_chat_options", JSON.stringify(o));
-      toast("Chat options saved", "ok");
-    }
-    loadOpts();
-    $("#c2-opts").addEventListener("click", () => optsPanel.classList.toggle("hidden"));
-    Object.values(optFields).forEach((sel) => $(sel).addEventListener("change", saveOpts));
-    $("#opt-reset").addEventListener("click", () => {
-      localStorage.removeItem("aios_chat_options");
-      Object.values(optFields).forEach((sel) => { $(sel).value = ""; });
-      toast("Options reset to model defaults", "ok");
     });
 
     // ---- character picker -------------------------------------------

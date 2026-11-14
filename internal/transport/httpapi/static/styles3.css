@@ -251,3 +251,4 @@ a { color: var(--accent-2); }
 /* prefs */
 .msg{max-width:var(--chat-max,900px)}
 .msg .bubble code,.codeblock pre code{font-size:var(--code-fs,12.5px)}
+.effort-select{background:var(--panel-2,#162033);border:1px solid var(--border,#2a3550);border-radius:8px;padding:6px 8px;color:inherit;font-size:12px}
