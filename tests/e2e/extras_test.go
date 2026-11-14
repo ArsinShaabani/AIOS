@@ -28,7 +28,7 @@ func TestStaticFilesHeadersAndMeta(t *testing.T) {
 	if resp.Header.Get("Content-Security-Policy") == "" || resp.Header.Get("X-Request-ID") != "req-test-123" {
 		t.Fatal("CSP or request id missing")
 	}
-	for _, path := range []string{"/app.js", "/styles.css", "/views.js", "/voice.js"} {
+	for _, path := range []string{"/app.js", "/styles.css", "/views.js", "/voice.js", "/styles3.css", "/markdown.js", "/prefs.js", "/views_chat3.js", "/views_chat4.js", "/views_chat5.js", "/views_models2.js", "/views_models3.js", "/views_character.js", "/views_settings2.js"} {
 		r, err := e.client.Get(e.server.URL + path)
 		if err != nil {
 			t.Fatal(err)
