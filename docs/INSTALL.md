@@ -9,7 +9,7 @@ plugins and document RAG.
 On a fresh Linux server (amd64 or arm64), as root:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ArsinShaabani/AIOS/main/deploy/install.sh \
+curl -fsSL https://github.com/ArsinShaabani/AIOS/releases/latest/download/install.sh \
   | sudo bash -s -- --admin-password 'Choose-A-Strong-Password'
 ```
 
@@ -61,7 +61,7 @@ journalctl -u aios -f
 ## Upgrading an existing install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ArsinShaabani/AIOS/main/deploy/install.sh -o /tmp/aios-install.sh
+curl -fsSL https://github.com/ArsinShaabani/AIOS/releases/latest/download/install.sh -o /tmp/aios-install.sh
 sudo bash /tmp/aios-install.sh --upgrade
 ```
 
@@ -266,7 +266,7 @@ drwxr-x--- root aios /etc/aios
 Repair an existing install (no download, no data loss):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ArsinShaabani/AIOS/main/deploy/install.sh \
+curl -fsSL https://github.com/ArsinShaabani/AIOS/releases/latest/download/install.sh \
   | sudo bash -s -- --repair
 ```
 
