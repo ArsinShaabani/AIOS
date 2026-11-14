@@ -50,11 +50,14 @@ RAM="$(mem_mb)"
 log "detected ${RAM} MB RAM"
 
 # --- pick a model that fits -------------------------------------------------
+# Speed on a CPU-only box is dominated by parameter count: ~1.5B gives a few
+# tokens/s, ~0.5B gives several times that. Default to the fastest tier that
+# still follows instructions, and let the operator opt into quality.
 pick_model() {
   local ram="$1"
-  if   (( ram <= 1800 )); then echo "qwen2.5:0.5b"
-  elif (( ram <= 4000 )); then echo "qwen2.5:1.5b"
-  elif (( ram <= 8000 )); then echo "qwen2.5:3b"
+  if   (( ram <= 3000 )); then echo "qwen2.5:0.5b"
+  elif (( ram <= 6000 )); then echo "qwen2.5:1.5b"
+  elif (( ram <= 10000 )); then echo "qwen2.5:3b"
   else                         echo "qwen2.5:7b"
   fi
 }
@@ -62,9 +65,11 @@ if [[ -z "$MODEL" ]]; then
   MODEL="$(pick_model "$RAM")"
   log "selected model $MODEL for ${RAM} MB RAM (override with --model)"
 fi
-# Conservative context so a 1 GB box does not swap.
-CTX=4096
-(( RAM > 8000 )) && CTX=8192
+# Small context is the single biggest CPU win: attention cost grows with it and
+# AIOS only needs a few thousand tokens for personality + retrieved memory.
+CTX=2048
+(( RAM > 4000 )) && CTX=4096
+(( RAM > 10000 )) && CTX=8192
 # --- install ollama ---------------------------------------------------------
 if ! command -v ollama >/dev/null; then
   log "installing ollama (official installer)"
@@ -73,6 +78,29 @@ else
   log "ollama already installed: $(ollama --version 2>/dev/null | head -1)"
 fi
 systemctl enable --now ollama >/dev/null 2>&1 || true
+
+# --- tune ollama for a CPU-only, single-user host ---------------------------
+# These are the settings that actually change perceived speed:
+#   KEEP_ALIVE=-1        model stays resident (no 10-30s reload per message)
+#   NUM_PARALLEL=1       one generation at a time; parallel requests only thrash
+#   MAX_LOADED_MODELS=1  never swap two models in and out of RAM
+#   CONTEXT_LENGTH       caps the attention window (biggest CPU cost)
+#   KV_CACHE_TYPE=q8_0   halves KV memory so more of the model stays hot
+if command -v systemctl >/dev/null && [[ -d /etc/systemd/system ]]; then
+  log "tuning ollama for CPU inference (ctx=$CTX, 1 request at a time)"
+  install -d -m 0755 /etc/systemd/system/ollama.service.d
+  cat > /etc/systemd/system/ollama.service.d/aios-tuning.conf <<EOF
+[Service]
+Environment="OLLAMA_KEEP_ALIVE=-1"
+Environment="OLLAMA_NUM_PARALLEL=1"
+Environment="OLLAMA_MAX_LOADED_MODELS=1"
+Environment="OLLAMA_CONTEXT_LENGTH=$CTX"
+Environment="OLLAMA_FLASH_ATTENTION=1"
+Environment="OLLAMA_KV_CACHE_TYPE=q8_0"
+EOF
+  systemctl daemon-reload || true
+  systemctl restart ollama || warn "could not restart ollama; tuning applies after the next restart"
+fi
 
 log "waiting for the ollama service"
 for _ in $(seq 1 40); do

@@ -126,19 +126,43 @@ The script installs Ollama, pulls one model, rewrites only the `llm:` section of
 `/etc/aios/config.yaml` (backup kept, owner/mode preserved), restarts AIOS and
 verifies the model answers before reporting success.
 
-Model guidance for CPU-only hosts (no GPU):
+Model guidance for CPU-only hosts (no GPU). Throughput is per core and only a
+rough guide — benchmark on your own host with `aios llm test`, which prints
+tok/s for each provider:
 
-| RAM | Model | Notes |
+| RAM | Model | Size | CPU speed (4 vCPU) | Notes |
+| --- | --- | --- | --- | --- |
+| 1–3 GB | `qwen2.5:0.5b` | ~400 MB | ~15–30 tok/s | fastest usable tier; short answers |
+| 1–3 GB | `gemma3:270m` | ~300 MB | ~25–40 tok/s | smallest; very terse |
+| 2–4 GB | `llama3.2:1b` | ~1.3 GB | ~8–15 tok/s | better English, weaker Persian |
+| 2–6 GB | `qwen2.5:1.5b` | ~1 GB | ~5–10 tok/s | previous default; noticeably slower |
+| 4–8 GB | `qwen2.5:3b` | ~2 GB | ~3–6 tok/s | better reasoning |
+| 8 GB+ | `qwen2.5:7b` | ~4.7 GB | ~1–3 tok/s | avoid without a GPU |
+
+Switching models takes one command (no reinstall):
+
+```bash
+sudo ollama pull qwen2.5:0.5b
+sudo bash /tmp/setup-ollama.sh --model qwen2.5:0.5b   # rewrites llm: and restarts
+```
+
+The setup script also writes an Ollama systemd drop-in that matters more than
+the model choice for perceived latency:
+
+| Setting | Value | Why |
 | --- | --- | --- |
-| 1–2 GB | `qwen2.5:0.5b` | fastest, short answers |
-| 2–4 GB | `qwen2.5:1.5b` | good default for a small VPS |
-| 4–8 GB | `qwen2.5:3b` | noticeably better reasoning |
-| 8 GB+ | `qwen2.5:7b` | best quality, slowest on CPU |
+| `OLLAMA_KEEP_ALIVE` | `-1` | model stays in RAM; no reload per message |
+| `OLLAMA_NUM_PARALLEL` | `1` | one generation already saturates a small CPU |
+| `OLLAMA_MAX_LOADED_MODELS` | `1` | prevents RAM thrashing |
+| `OLLAMA_CONTEXT_LENGTH` | 2048–8192 | attention cost grows with context |
+| `OLLAMA_KV_CACHE_TYPE` | `q8_0` | halves KV cache memory |
 
 Ollama exposes an OpenAI-compatible API under `/v1`; AIOS normalizes
 `base_url` automatically, so `http://127.0.0.1:11434` is enough. Keep
 `max_concurrency: 1` on a single-core box: one generation already saturates the
-CPU, and parallel requests only add latency and memory pressure.
+CPU, and parallel requests only add latency and memory pressure. For very small
+hosts you can also lower `memory.max_context_tokens` (default 3000) and
+`llm.max_tokens` to trim the prompt.
 
 Streaming, tools and memory work the same as with a hosted provider. Models
 below ~3B follow tool calls unreliably; keep agents simple on very small hosts.

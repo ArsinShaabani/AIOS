@@ -74,6 +74,7 @@ func runLLMTest(args []string) {
 		} else {
 			fmt.Printf("  ✓ ping ok\n")
 		}
+		started := time.Now()
 		resp, chatErr := p.Chat(ctx, ports.ChatRequest{
 			Model:       firstModel(cfg, name, p),
 			Messages:    []ports.ChatMessage{{Role: "user", Content: *prompt}},
@@ -85,11 +86,18 @@ func runLLMTest(args []string) {
 			failed = true
 			continue
 		}
+		elapsed := time.Since(started)
 		content := strings.TrimSpace(resp.Content)
 		if len(content) > 120 {
 			content = content[:120] + "…"
 		}
-		fmt.Printf("  ✓ chat ok: %q\n\n", content)
+		speed := ""
+		if out := resp.Usage.CompletionTokens; out > 0 && elapsed > 0 {
+			speed = fmt.Sprintf(" (%.1f tok/s, %d tokens in %.1fs)", float64(out)/elapsed.Seconds(), out, elapsed.Seconds())
+		} else if elapsed > 0 {
+			speed = fmt.Sprintf(" (%.1fs)", elapsed.Seconds())
+		}
+		fmt.Printf("  ✓ chat ok%s: %q\n\n", speed, content)
 	}
 
 	if failed {
