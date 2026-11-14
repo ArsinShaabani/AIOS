@@ -184,6 +184,8 @@ fi
 case "$(uname -m)" in
   x86_64|amd64) ARCH=amd64 ;;
   aarch64|arm64) ARCH=arm64 ;;
+  armv7l|armv7|armv8l) ARCH=armv7 ;;
+  armv6l) die "32-bit ARMv6 is not supported by the release build; use --local-binary with 'make build' or a 64-bit OS" ;;
   *) die "unsupported architecture $(uname -m); build from source with 'make build'" ;;
  esac
 install_pkgs() {
@@ -243,21 +245,40 @@ else
   if [[ -z "$VERSION" ]]; then
     VERSION="$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null \
       | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p' | head -1 || true)"
+    [[ -n "$VERSION" ]] || die "cannot detect the latest release; pass --version vX.Y.Z"
   fi
-  ASSET="aios-linux-$ARCH"
-  if [[ -n "$VERSION" ]]; then
-    URL="https://github.com/$REPO/releases/download/$VERSION/$ASSET"
-  else
-    URL="https://github.com/$REPO/releases/latest/download/$ASSET"
-  fi
-  log "downloading $URL"
-  curl -fL --retry 3 --connect-timeout 15 -o "$TMP/aios" "$URL" \
-    || die "download failed; build locally with 'make build' and use --local-binary"
-  if curl -fsSL -o "$TMP/aios.sha256" "${URL}.sha256" 2>/dev/null && [[ -s "$TMP/aios.sha256" ]]; then
-    expected="$(awk '{print $1}' "$TMP/aios.sha256")"
+  VERSION_NUM="${VERSION#v}"
+  # Release assets are versioned (aios_1.2.0_linux_amd64). Older releases used
+  # aios-linux-<arch>; accept both so upgrades keep working.
+  CANDIDATES=(
+    "aios_${VERSION_NUM}_linux_${ARCH}"
+    "aios-linux-${ARCH}"
+    "aios_${ARCH}"
+  )
+  URL=""
+  ASSET=""
+  for candidate in "${CANDIDATES[@]}"; do
+    try_url="https://github.com/$REPO/releases/download/$VERSION/$candidate"
+    log "trying $try_url"
+    if curl -fL --retry 2 --connect-timeout 15 -o "$TMP/aios" "$try_url" 2>/dev/null; then
+      URL="$try_url"; ASSET="$candidate"; break
+    fi
+  done
+  [[ -n "$URL" ]] || die "download failed for $VERSION ($ARCH); check that the release has a linux-$ARCH asset"
+  log "downloaded $ASSET"
+  expected=""
+  for sum in "SHA256SUMS-${VERSION_NUM}.txt" "SHA256SUMS" "${ASSET}.sha256"; do
+    if curl -fsSL -o "$TMP/sums" "https://github.com/$REPO/releases/download/$VERSION/$sum" 2>/dev/null && [[ -s "$TMP/sums" ]]; then
+      expected="$(awk -v a="$ASSET" '$2 == a || $2 == "*" a {print $1; exit}' "$TMP/sums")"
+      [[ -n "$expected" ]] && break
+    fi
+  done
+  if [[ -n "$expected" ]]; then
     actual="$(sha256sum "$TMP/aios" | awk '{print $1}')"
-    [[ "$expected" == "$actual" ]] || die "checksum mismatch"
+    [[ "$expected" == "$actual" ]] || die "checksum mismatch (expected $expected, got $actual)"
     log "checksum verified"
+  else
+    warn "no checksum published for $ASSET; skipping verification"
   fi
   install -m 0755 "$TMP/aios" "$BIN"
 fi
@@ -294,7 +315,7 @@ server:
   read_timeout: 15s
   write_timeout: 120s
   idle_timeout: 120s
-  max_body_bytes: 2097152
+  max_body_bytes: 8388608
   cors_origins: []
   enable_graphql: true
   rate_limit:
@@ -377,7 +398,7 @@ memory:
   long_term_enabled: true
   semantic_enabled: true
   retrieval_top_k: 5
-  max_context_tokens: 3000
+  max_context_tokens: 8192
 
 observability:
   metrics_enabled: true

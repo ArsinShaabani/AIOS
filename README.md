@@ -33,9 +33,19 @@ personality, voice, devices, plugins and an admin dashboard in a single Go binar
 ## Install on a server (one command)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ArsinShaabani/AIOS/main/deploy/install.sh \
+curl -fsSL https://github.com/ArsinShaabani/AIOS/releases/latest/download/install.sh \
   | sudo bash -s -- --admin-password 'Choose-A-Strong-Password'
 ```
+
+- amd64 / arm64 / armv7 (Raspberry Pi) assets are detected automatically.
+- Upgrade in place (keeps config and data): `--upgrade`.
+- Offline install: `sudo bash install.sh --local-binary ./aios_1.2.1_linux_amd64`.
+- Pin a version: `--version v1.2.1`.
+- Without systemd (containers): `--no-systemd`.
+
+The installer verifies the SHA-256 checksum, creates a hardened systemd unit and
+prints the generated admin password (also stored in
+`/etc/aios/admin-password.txt`).
 
 Installs a static binary, hardened systemd service, production config and the
 admin dashboard on `http://<server>:8080`. See [docs/INSTALL.md](docs/INSTALL.md).
