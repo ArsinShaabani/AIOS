@@ -5,18 +5,17 @@ import (
 	"fmt"
 
 	"github.com/ArsinShaabani/AIOS/internal/adapters/cache"
-	llmadapter "github.com/ArsinShaabani/AIOS/internal/adapters/llm"
 	"github.com/ArsinShaabani/AIOS/internal/adapters/queue"
 	"github.com/ArsinShaabani/AIOS/internal/adapters/storage/sqlstore"
 	"github.com/ArsinShaabani/AIOS/internal/adapters/vector"
 	"github.com/ArsinShaabani/AIOS/internal/agents"
 	"github.com/ArsinShaabani/AIOS/internal/brain"
 	"github.com/ArsinShaabani/AIOS/internal/documents"
-	"github.com/ArsinShaabani/AIOS/internal/llm"
 	"github.com/ArsinShaabani/AIOS/internal/memory"
 	"github.com/ArsinShaabani/AIOS/internal/personality"
 	"github.com/ArsinShaabani/AIOS/internal/platform"
 	"github.com/ArsinShaabani/AIOS/internal/plugins"
+	"github.com/ArsinShaabani/AIOS/internal/providers"
 	"github.com/ArsinShaabani/AIOS/internal/security"
 	"github.com/ArsinShaabani/AIOS/internal/tools"
 	"github.com/ArsinShaabani/AIOS/internal/transport/httpapi"
@@ -53,18 +52,18 @@ func (a *App) initCore(ctx context.Context) error {
 }
 
 func (a *App) initAI(ctx context.Context) error {
-	providers, errs := llmadapter.BuildAll(a.Config.LLM.Providers)
-	for _, err := range errs {
-		a.Log.Warn("model provider disabled", "error", err)
-	}
-	if _, ok := providers[a.Config.LLM.DefaultProvider]; !ok {
-		return fmt.Errorf("default provider %q could not be constructed", a.Config.LLM.DefaultProvider)
-	}
 	a.Usage = NewUsageRecorder(a.Repos.Usage, a.Log)
-	a.Router = llm.NewRouter(a.Config.LLM, providers, a.Cache, a.Usage, a.Metrics, a.Log)
 	a.Tokens = security.NewTokenService(a.Config.Security, a.Keyring, a.Repos.Tokens, a.Repos.Users)
 	a.Auditor = security.NewAuditor(a.Repos.Audit, a.Log)
 	a.Secrets = security.NewSecrets(a.Repos.Settings, a.Keyring)
+	// Provider overrides managed from the GUI are merged over the YAML baseline.
+	svc, err := providers.New(a.Config.LLM, a.Repos.Settings, a.Secrets, a.Cache, a.Usage, a.Metrics, a.Log)
+	if err != nil {
+		return fmt.Errorf("model providers: %w", err)
+	}
+	a.Providers = svc
+	a.Config.LLM = svc.LLM()
+	a.Router = svc.Router()
 	a.Memory = memory.New(a.Repos.Memories, a.Repos.Sessions, a.Repos.Messages, a.Repos.Users,
 		a.Vector, a.Cache, a.Router, a.Config.Memory, a.Config.Vector.Dim, a.Log)
 	a.Documents = documents.New(a.Repos.Documents, a.Vector, a.Router, a.Config.RAG, a.Config.Vector.Dim, a.Log)
@@ -77,7 +76,7 @@ func (a *App) initAPI() error {
 	a.API = &httpapi.API{
 		Config: a.Config, Repos: a.Repos, Auth: a.Tokens, Auditor: a.Auditor, Secrets: a.Secrets,
 		Brain: a.Brain, Memory: a.Memory, Documents: a.Documents, Devices: a.Devices, Personality: a.Personality,
-		Agents: a.Agents, Plugins: a.Plugins, Scheduler: a.Scheduler, Router: a.Router,
+		Agents: a.Agents, Plugins: a.Plugins, Scheduler: a.Scheduler, Router: a.Router, Providers: a.Providers,
 		Voice: a.Voice, Queue: a.Queue, Metrics: a.Metrics, System: a.System, Health: a.Health,
 		Bus: a.Bus, Log: a.Log, Version: a.Version,
 		VoiceProfiles: voice.NewProfileStore(a.Repos.Settings),

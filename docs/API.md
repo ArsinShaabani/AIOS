@@ -179,3 +179,19 @@ mutation {
 ```
 
 Properties are camelCase in GraphQL (`displayName`, `messageCount`, `agentId`).
+
+## Provider management (v1.1)
+
+| Method | Path | Permission | Description |
+|---|---|---|---|
+| GET | `/api/v1/admin/providers` | models:read | Providers, masked keys, health, default, pulls |
+| GET | `/api/v1/admin/providers/catalog` | models:read | Presets (keyless local, free tiers, paid) |
+| PUT | `/api/v1/admin/providers/{name}` | admin | Add/update, encrypt key, hot-swap router |
+| DELETE | `/api/v1/admin/providers/{name}` | admin | Remove provider and its secret |
+| POST | `/api/v1/admin/providers/{name}/test` | admin | Real completion + latency/tok-s |
+| POST | `/api/v1/admin/providers/default` | admin | `{provider, model}` global default |
+| GET | `/api/v1/admin/ollama/models` | admin | Installed models + pull status |
+| POST | `/api/v1/admin/ollama/pull` | admin | `{model}` async pull |
+| DELETE | `/api/v1/admin/ollama/models?name=` | admin | Delete a local model |
+
+Keys are write-only: responses only contain hints such as `••••abcd`.

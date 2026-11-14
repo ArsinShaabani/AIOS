@@ -157,6 +157,19 @@
       default: return true;
     }
   }
+  async function refreshModelChip() {
+    const label = $("#model-chip-label"), chip = $("#model-chip");
+    if (!label || !can("models:read")) return;
+    try {
+      const d = await api("/admin/providers");
+      const p = (d.items || []).find((x) => x.default) || (d.items || [])[0];
+      if (!p) { label.textContent = "no model"; chip.classList.add("bad"); return; }
+      label.textContent = p.name + " · " + (p.default_model || "");
+      chip.classList.toggle("bad", !p.healthy);
+      chip.title = p.last_error || "Active model";
+    } catch (e) {}
+  }
+
   function renderShell() {
     const user = state.user || { display_name: "User", email: "", role: "user" };
     const initials = (user.display_name || user.email || "U").slice(0, 1).toUpperCase();
@@ -180,6 +193,8 @@
       '<button class="btn ghost sm" id="logout" style="margin-top:8px">Sign out</button>' +
       '</aside><div class="main">' +
       '<header class="topbar"><h2 id="view-title">Overview</h2><div class="spacer"></div>' +
+      '<button class="model-chip" id="model-chip" title="Active model"><span class="dot"></span><span id="model-chip-label">model</span></button>' +
+      '<button class="icon-btn" id="theme-btn" title="Toggle theme">◐</button>' +
       '<span class="badge"><span class="dot"></span> connected</span>' +
       '<span class="badge" id="clock"></span></header>' +
       '<div class="content" id="content"><div class="empty">Loading…</div></div>' +
@@ -192,7 +207,7 @@
     }, 1000);
   }
   const TITLES = {
-    overview: "Overview", chat: "Chat", sessions: "Sessions", memory: "Memory", documents: "Documents", devices: "Devices",
+    overview: "Overview", chat: "Chat", character: "Characters", sessions: "Sessions", memory: "Memory", documents: "Documents", devices: "Devices",
     agents: "Agents", models: "Model Router", usage: "Usage & Cost", plugins: "Plugins",
     queue: "Task Queue", settings: "Settings", users: "Users", logs: "Audit Log", system: "System",
   };

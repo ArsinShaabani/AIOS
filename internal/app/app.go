@@ -17,13 +17,13 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/config"
 	"github.com/ArsinShaabani/AIOS/internal/devices"
 	"github.com/ArsinShaabani/AIOS/internal/documents"
-	"github.com/ArsinShaabani/AIOS/internal/llm"
 	"github.com/ArsinShaabani/AIOS/internal/memory"
 	"github.com/ArsinShaabani/AIOS/internal/mqttbridge"
 	"github.com/ArsinShaabani/AIOS/internal/observability"
 	"github.com/ArsinShaabani/AIOS/internal/personality"
 	"github.com/ArsinShaabani/AIOS/internal/plugins"
 	"github.com/ArsinShaabani/AIOS/internal/ports"
+	"github.com/ArsinShaabani/AIOS/internal/providers"
 	"github.com/ArsinShaabani/AIOS/internal/scheduler"
 	"github.com/ArsinShaabani/AIOS/internal/security"
 	"github.com/ArsinShaabani/AIOS/internal/tools"
@@ -37,17 +37,18 @@ type App struct {
 	Log     *slog.Logger
 	Version string
 
-	DB      *sqlstore.DB
-	Repos   *sqlstore.Repositories
-	Cache   ports.Cache
-	Vector  ports.VectorStore
-	Queue   ports.Queue
-	Router  *llm.Router
-	Usage   *UsageRecorder
-	Keyring *security.Keyring
-	Tokens  *security.TokenService
-	Auditor *security.Auditor
-	Secrets *security.Secrets
+	DB        *sqlstore.DB
+	Repos     *sqlstore.Repositories
+	Cache     ports.Cache
+	Vector    ports.VectorStore
+	Queue     ports.Queue
+	Router    ports.ModelRouter
+	Usage     *UsageRecorder
+	Keyring   *security.Keyring
+	Tokens    *security.TokenService
+	Auditor   *security.Auditor
+	Secrets   *security.Secrets
+	Providers *providers.Service
 
 	Memory        *memory.Service
 	Documents     *documents.Service

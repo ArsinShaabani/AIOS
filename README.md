@@ -118,3 +118,16 @@ composition root in `internal/app`.
 
 MIT — see [LICENSE](LICENSE).
 
+## Web GUI (v1.1)
+
+- **Chat** with streaming Markdown, syntax-styled code blocks + copy, animated
+  *Thinking…* state with elapsed timer, inline tool-run cards, stop button, token
+  usage and character/model pickers.
+- **Models**: add any OpenAI-compatible, Anthropic, Gemini or Ollama provider with
+  an API key (encrypted at rest), test it with a real completion (tok/s + latency),
+  switch the global default, and pull/delete Ollama models with progress. One-click
+  presets for keyless local servers and free tiers — see [docs/MODELS.md](docs/MODELS.md).
+- **Characters**: gallery + editor for tone, humor, warmth, length and custom
+  instructions; per-browser default character.
+- **Settings**: dark/light/system theme, accent color, font size, density, motion,
+  account and data export. All personalization is stored locally.

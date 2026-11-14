@@ -58,6 +58,15 @@ func (a *API) registerAdminRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/admin/queue", a.perm(securityPermQueueRead, a.handleQueue))
 	mux.HandleFunc("GET /api/v1/admin/prompt/{sessionID}", a.perm(securityPermUsersRead, a.handlePromptPreview))
 	mux.HandleFunc("GET /api/v1/admin/memories", a.perm(securityPermMemoryRead, a.handleAdminMemories))
+	mux.HandleFunc("GET /api/v1/admin/providers", a.perm(securityPermModelsRead, a.handleListProviders))
+	mux.HandleFunc("GET /api/v1/admin/providers/catalog", a.perm(securityPermModelsRead, a.handleProviderCatalog))
+	mux.HandleFunc("PUT /api/v1/admin/providers/{name}", a.perm(securityPermAdmin, a.handleUpsertProvider))
+	mux.HandleFunc("DELETE /api/v1/admin/providers/{name}", a.perm(securityPermAdmin, a.handleDeleteProvider))
+	mux.HandleFunc("POST /api/v1/admin/providers/{name}/test", a.perm(securityPermAdmin, a.handleTestProvider))
+	mux.HandleFunc("POST /api/v1/admin/providers/default", a.perm(securityPermAdmin, a.handleSetDefaultProvider))
+	mux.HandleFunc("GET /api/v1/admin/ollama/models", a.perm(securityPermAdmin, a.handleOllamaModels))
+	mux.HandleFunc("POST /api/v1/admin/ollama/pull", a.perm(securityPermAdmin, a.handleOllamaPull))
+	mux.HandleFunc("DELETE /api/v1/admin/ollama/models", a.perm(securityPermAdmin, a.handleOllamaDelete))
 	mux.HandleFunc("POST /api/v1/admin/maintenance/prune", a.perm(securityPermAdmin, a.handlePrune))
 }
 

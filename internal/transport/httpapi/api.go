@@ -22,6 +22,7 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/personality"
 	"github.com/ArsinShaabani/AIOS/internal/plugins"
 	"github.com/ArsinShaabani/AIOS/internal/ports"
+	"github.com/ArsinShaabani/AIOS/internal/providers"
 	"github.com/ArsinShaabani/AIOS/internal/scheduler"
 	"github.com/ArsinShaabani/AIOS/internal/security"
 	"github.com/ArsinShaabani/AIOS/internal/voice"
@@ -46,6 +47,7 @@ type API struct {
 	Plugins       *plugins.Host
 	Scheduler     *scheduler.Service
 	Router        ports.ModelRouter
+	Providers     *providers.Service
 	Voice         *voice.Service
 	VoiceProfiles *voice.ProfileStore
 	Queue         ports.Queue
