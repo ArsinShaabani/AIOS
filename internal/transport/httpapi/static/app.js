@@ -140,7 +140,7 @@
   const NAV = [
     { group: "Workspace", items: [
       ["overview", "Overview", "◎"], ["chat", "Chat", "✎"], ["sessions", "Sessions", "▤"],
-      ["myai", "هوش مصنوعی من", "⚡"], ["memory", "Memory", "❖"], ["documents", "Documents", "❐"], ["devices", "Devices", "◈"],
+      ["myai", "هوش مصنوعی من", "⚡"], ["character", "شخصیت‌ها", "☺"], ["memory", "Memory", "❖"], ["documents", "Documents", "❐"], ["devices", "Devices", "◈"],
     ]},
     { group: "Intelligence", items: [
       ["agents", "Skills & Agents", "✦"], ["models", "Model Router", "⇄"], ["usage", "Usage & Cost", "◷"],

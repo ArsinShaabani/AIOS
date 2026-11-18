@@ -47,6 +47,15 @@ func TestStaticFilesHeadersAndMeta(t *testing.T) {
 	if openapi.StatusCode != 200 || !strings.Contains(string(spec), "openapi: 3.0.3") {
 		t.Fatalf("openapi: %d", openapi.StatusCode)
 	}
+	docs, err := e.client.Get(e.server.URL + "/docs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	docsBody, _ := io.ReadAll(docs.Body)
+	docs.Body.Close()
+	if docs.StatusCode != 200 || !strings.Contains(string(docsBody), "/openapi.yaml") {
+		t.Fatalf("api docs: %d", docs.StatusCode)
+	}
 	if status, meta := e.do("GET", "/api/v1/meta", "", nil); status != 200 || meta["name"] != "AIOS" {
 		t.Fatalf("meta: %d %v", status, meta)
 	}

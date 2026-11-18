@@ -111,11 +111,13 @@ type STTConfig struct {
 }
 
 type TTSConfig struct {
-	Provider string   `yaml:"provider"` // piper_http | edge_http | openai | mock
+	Provider string   `yaml:"provider"` // piper_http | coqui_http | edge_http | azure | openai | mock
 	BaseURL  string   `yaml:"base_url"`
 	APIKey   string   `yaml:"api_key"`
+	Region   string   `yaml:"region"` // Azure Speech region (westeurope, ...)
 	Voice    string   `yaml:"voice"`
 	Model    string   `yaml:"model"`
+	Language string   `yaml:"language"`
 	Format   string   `yaml:"format"` // wav | mp3 | opus
 	Speed    float64  `yaml:"speed"`
 	Timeout  Duration `yaml:"timeout"`

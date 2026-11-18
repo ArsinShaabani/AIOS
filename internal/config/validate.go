@@ -119,9 +119,9 @@ func (c *Config) Validate() error {
 			add("voice.stt.provider must be whisper_http, openai or mock")
 		}
 		switch c.Voice.TTS.Provider {
-		case "piper_http", "edge_http", "openai", "mock":
+		case "piper_http", "coqui_http", "edge_http", "azure", "openai", "mock":
 		default:
-			add("voice.tts.provider must be piper_http, edge_http, openai or mock")
+			add("voice.tts.provider must be piper_http, coqui_http, edge_http, azure, openai or mock")
 		}
 		switch c.Voice.TTS.Format {
 		case "", "wav", "mp3", "opus":

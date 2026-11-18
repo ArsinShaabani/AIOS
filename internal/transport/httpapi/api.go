@@ -20,6 +20,7 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/memory"
 	"github.com/ArsinShaabani/AIOS/internal/observability"
 	"github.com/ArsinShaabani/AIOS/internal/personality"
+	"github.com/ArsinShaabani/AIOS/internal/platform"
 	"github.com/ArsinShaabani/AIOS/internal/plugins"
 	"github.com/ArsinShaabani/AIOS/internal/ports"
 	"github.com/ArsinShaabani/AIOS/internal/providers"
@@ -83,6 +84,7 @@ func (a *API) Routes() http.Handler {
 	}
 	mux.HandleFunc("GET /api/v1/meta", a.handleMeta)
 	mux.HandleFunc("GET /openapi.yaml", a.handleOpenAPI)
+	mux.HandleFunc("GET /docs", a.handleAPIDocs)
 
 	a.registerAuthRoutes(mux)
 	a.registerChatRoutes(mux)
@@ -128,6 +130,17 @@ func (a *API) handleMeta(w http.ResponseWriter, r *http.Request) {
 		"graphql": a.Config.Server.EnableGraphQL, "voice": a.Config.Voice.Enabled,
 		"time": time.Now().UTC(), "allow_registration": a.Config.Security.AllowRegistration,
 	})
+}
+
+func (a *API) handleAPIDocs(w http.ResponseWriter, r *http.Request) {
+	raw, err := staticFS.ReadFile("static/docs.html")
+	if err != nil {
+		a.fail(w, r, platform.Internal("docs.missing", "API reference is unavailable"))
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' https://cdn.redoc.ly 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cdn.redoc.ly")
+	_, _ = w.Write(raw)
 }
 
 func (a *API) handleOpenAPI(w http.ResponseWriter, r *http.Request) {

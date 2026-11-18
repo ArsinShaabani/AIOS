@@ -155,10 +155,12 @@ voice:
     language: ""               # auto-detect when empty
     timeout: 60s
   tts:
-    provider: piper_http       # piper_http | edge_http | openai | mock
+    provider: piper_http       # piper_http | coqui_http | edge_http | azure | openai | mock
     base_url: http://127.0.0.1:5000
     api_key: ""
+    region: ""                 # Azure Speech region, e.g. westeurope
     voice: en_US-lessac-medium
+    language: en
     format: wav
     speed: 1.0
     timeout: 60s

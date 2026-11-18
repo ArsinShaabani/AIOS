@@ -145,9 +145,16 @@ func BuildEngines(cfg config.VoiceConfig) (ports.STT, ports.TTS, error) {
 		if ttsCfg.APIKey == "" {
 			return nil, nil, platform.Invalid("voice.openai_tts_key", "voice.tts.api_key is required for the OpenAI provider")
 		}
-	case "piper_http", "edge_http":
+	case "piper_http", "coqui_http", "edge_http":
 		if ttsCfg.BaseURL == "" {
 			return nil, nil, platform.Invalid("voice.tts_url", "voice.tts.base_url is required for "+cfg.TTS.Provider)
+		}
+	case "azure":
+		if ttsCfg.BaseURL == "" && ttsCfg.Region == "" {
+			return nil, nil, platform.Invalid("voice.tts_url", "voice.tts.base_url or voice.tts.region is required for azure")
+		}
+		if ttsCfg.APIKey == "" {
+			return nil, nil, platform.Invalid("voice.tts_key", "voice.tts.api_key is required for azure")
 		}
 	case "mock":
 	default:
@@ -167,8 +174,12 @@ func BuildEngines(cfg config.VoiceConfig) (ports.STT, ports.TTS, error) {
 		tts = MockTTS{}
 	case "piper_http":
 		tts = NewPiperTTS(ttsCfg)
+	case "coqui_http":
+		tts = NewCoquiTTS(ttsCfg)
 	case "edge_http":
 		tts = NewEdgeTTS(ttsCfg)
+	case "azure":
+		tts = NewAzureTTS(ttsCfg)
 	case "openai":
 		tts = NewOpenAITTS(ttsCfg)
 	}

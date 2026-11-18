@@ -5,6 +5,8 @@ Base URL: `http://<host>:8080`. All bodies are JSON. Authenticate with
 its device token as a bearer token on `/api/v1/device/*`.
 
 The machine-readable specification is served at [`/openapi.yaml`](http://localhost:8080/openapi.yaml).
+A browser-based reference is available at [`/docs`](http://localhost:8080/docs) (Redoc via CDN;
+the raw YAML works offline with Swagger UI, Postman or codegen).
 GraphQL is at `POST /graphql` (playground at `GET /graphql`). Prometheus metrics
 at `GET /metrics`; liveness `GET /healthz`; readiness `GET /readyz`.
 

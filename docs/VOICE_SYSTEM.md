@@ -63,7 +63,9 @@ voice:
 | TTS provider | Endpoint | Notes |
 |---|---|---|
 | `piper_http` | `POST {base}/api/tts` | JSON `{text,voice,format,speed}` → audio |
+| `coqui_http` | `POST {base}/api/tts` | JSON `{text,speaker_id,language_id}` → WAV |
 | `edge_http` | `POST {base}/tts` | same contract, Edge-TTS bridge |
+| `azure` | `POST https://{region}.tts.speech.microsoft.com/...` | SSML; `api_key`, `region` (or `base_url`), `voice` |
 | `openai` | `POST {base}/audio/speech` | audio bytes |
 | `mock` | — | generated WAV tone, deterministic |
 

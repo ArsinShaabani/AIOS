@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AIOS API reference</title>
+  <style>
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; background: #0b0f16; color: #dbe4f0; }
+    .bar { display: flex; gap: 12px; align-items: center; padding: 14px 20px; border-bottom: 1px solid #243044; background: #111827; }
+    .bar a { color: #8b5cf6; text-decoration: none; }
+    .bar .spacer { flex: 1; }
+    #status { padding: 40px; text-align: center; color: #93a4bd; }
+    #status code { color: #dbe4f0; }
+    redoc { display: block; }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <strong>AIOS API</strong>
+    <span class="muted" id="spec-link">/openapi.yaml</span>
+    <span class="spacer"></span>
+    <a href="/openapi.yaml">Download OpenAPI</a>
+    <a href="/">Dashboard</a>
+  </div>
+  <div id="status">Loading the API reference… If this server is offline, use <code>/openapi.yaml</code> with any OpenAPI/Swagger viewer.</div>
+  <redoc spec-url="/openapi.yaml"></redoc>
+  <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+  <script>
+    window.addEventListener("load", function () {
+      setTimeout(function () {
+        if (!document.querySelector("redoc .menu-content")) {
+          document.getElementById("status").textContent =
+            "The Redoc CDN is unreachable from this browser. Download /openapi.yaml and open it in Swagger UI, Insomnia or Postman.";
+        }
+      }, 2500);
+    });
+  </script>
+</body>
+</html>
