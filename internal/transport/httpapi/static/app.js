@@ -149,12 +149,13 @@
       ["plugins", "Plugins", "⧉"], ["queue", "Task Queue", "≣"], ["settings", "Settings", "⚙"],
     ]},
     { group: "Admin", items: [
-      ["users", "Users", "☰"], ["logs", "Audit Log", "▦"], ["system", "System", "⌁"], ["help", "راهنما", "؟"],
+      ["users", "Users", "☰"], ["security", "Security", "⛨"], ["logs", "Audit Log", "▦"], ["system", "System", "⌁"], ["help", "راهنما", "؟"],
     ]},
   ];
   function itemVisible(id) {
     switch (id) {
       case "users": return can("users:read");
+      case "security": return can("users:read");
       case "logs": return can("logs:read");
       case "settings": return can("settings:read");
       case "plugins": return can("plugins:read");
@@ -225,7 +226,7 @@
     }, 1000);
   }
   const TITLES = {
-    overview: "Overview", chat: "Chat", myai: "هوش مصنوعی من", help: "راهنما", character: "Characters", sessions: "Sessions", memory: "Memory", documents: "Documents", devices: "Devices",
+    overview: "Overview", chat: "Chat", myai: "هوش مصنوعی من", help: "راهنما", character: "شخصیت‌ها", sessions: "Sessions", memory: "Memory", documents: "Documents", devices: "Devices",
     agents: "Skills & Agents", models: "Model Router", usage: "Usage & Cost", plugins: "Plugins",
     queue: "Task Queue", settings: "Settings", users: "Users", logs: "Audit Log", system: "System",
   };

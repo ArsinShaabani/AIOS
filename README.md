@@ -39,8 +39,8 @@ curl -fsSL https://github.com/ArsinShaabani/AIOS/releases/latest/download/instal
 
 - amd64 / arm64 / armv7 (Raspberry Pi) assets are detected automatically.
 - Upgrade in place (keeps config and data): `--upgrade`.
-- Offline install: `sudo bash install.sh --local-binary ./aios_1.2.1_linux_amd64`.
-- Pin a version: `--version v1.2.1`.
+- Offline install: `sudo bash install.sh --local-binary ./aios_1.3.1_linux_amd64`.
+- Pin a version: `--version v1.3.1`.
 - Without systemd (containers): `--no-systemd`.
 
 The installer verifies the SHA-256 checksum, creates a hardened systemd unit and
@@ -86,28 +86,29 @@ Full stack (Postgres/Redis/Qdrant/Ollama/Whisper/Piper):
 | Devices: MQTT, HTTP, capability validation, telemetry | ✅ |
 | Authenticated MQTT chat bridge (API keys, rate limits) | ✅ |
 | Home Assistant, navigation, email, reminders/automations | ✅ |
-| Voice: VAD, Whisper, Piper/Edge/OpenAI TTS, wake word, barge-in | ✅ |
+| Voice: VAD, Whisper, Piper/Coqui/Edge/Azure/OpenAI TTS, wake word, barge-in | ✅ |
 | Plugins: HTTP tools + WASM sandbox (wazero) + permissions | ✅ |
 | Plugin supply chain: Ed25519 signatures, trusted keys, marketplace manifest | ✅ |
 | Security: JWT + refresh rotation, RBAC, audit, AES-GCM, SSRF guard | ✅ |
 | Admin SPA, Prometheus metrics, health, audit | ✅ |
-| Docker (multi-arch), compose profiles, systemd, CI/release | ✅ |
+| Docker (multi-arch), compose profiles, systemd, CI/release workflows | ✅ (workflows staged, see audit) |
 | Postgres / Redis / Qdrant adapters | ✅ (opt-in) |
 | Queue visibility timeout + stale task reclaim | ✅ |
-| PostgreSQL integration tests in CI | ✅ |
+| PostgreSQL integration tests (env-gated) | ✅ |
 | Event bus: in-memory or NATS (horizontal scaling) | ✅ |
 | Cross-replica chat fan-out + MQTT shared subscriptions | ✅ |
-| Test coverage | ✅ 80%+ enforced in CI (currently ~80.8%; see [DESIGN.md](docs/DESIGN.md#7-test-strategy)) |
+| Test coverage | ✅ 80%+ enforced by the coverage gate (currently 80.2%; see [DESIGN.md](docs/DESIGN.md#7-test-strategy)) |
 
 Roadmap, MVP definition and risks: [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md) · [Design details + ERD + roadmap](docs/DESIGN.md)
-- [API reference](docs/API.md) · OpenAPI at `/openapi.yaml`
+- [API reference](docs/API.md) · OpenAPI at `/openapi.yaml`, browser reference at `/docs`
 - [Deployment](docs/DEPLOYMENT.md) · [Security](docs/SECURITY.md)
 - [Voice system](docs/VOICE_SYSTEM.md) · [Device integration](docs/DEVICE_INTEGRATION.md)
 - [Plugin development](docs/PLUGIN_DEVELOPMENT.md) · [User guide](docs/USER_GUIDE.md)
+- [Requirement-by-requirement audit](docs/REQUIREMENTS.md)
 
 ## Development
 
@@ -158,7 +159,7 @@ MIT — see [LICENSE](LICENSE).
   Markdown), character gallery picker, advanced options, stop/regenerate.
 - **Appearance**: code font size, chat width + existing theme/accent/density.
 
-See [docs/V1.2.md](docs/V1.2.md).
+See [docs/V1.3.0.md](docs/V1.3.0.md).
 
 ## Bring your own AI (v1.3)
 
