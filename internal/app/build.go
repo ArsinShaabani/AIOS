@@ -19,6 +19,7 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/security"
 	"github.com/ArsinShaabani/AIOS/internal/tools"
 	"github.com/ArsinShaabani/AIOS/internal/transport/httpapi"
+	"github.com/ArsinShaabani/AIOS/internal/userai"
 	"github.com/ArsinShaabani/AIOS/internal/voice"
 )
 
@@ -56,6 +57,7 @@ func (a *App) initAI(ctx context.Context) error {
 	a.Tokens = security.NewTokenService(a.Config.Security, a.Keyring, a.Repos.Tokens, a.Repos.Users)
 	a.Auditor = security.NewAuditor(a.Repos.Audit, a.Log)
 	a.Secrets = security.NewSecrets(a.Repos.Settings, a.Keyring)
+	a.UserAI = userai.New(a.Repos.UserProviders, a.Keyring)
 	// Provider overrides managed from the GUI are merged over the YAML baseline.
 	svc, err := providers.New(a.Config.LLM, a.Repos.Settings, a.Secrets, a.Cache, a.Usage, a.Metrics, a.Log)
 	if err != nil {
@@ -76,7 +78,7 @@ func (a *App) initAPI() error {
 	a.API = &httpapi.API{
 		Config: a.Config, Repos: a.Repos, Auth: a.Tokens, Auditor: a.Auditor, Secrets: a.Secrets,
 		Brain: a.Brain, Memory: a.Memory, Documents: a.Documents, Devices: a.Devices, Personality: a.Personality,
-		Agents: a.Agents, Plugins: a.Plugins, Scheduler: a.Scheduler, Router: a.Router, Providers: a.Providers,
+		Agents: a.Agents, Plugins: a.Plugins, Scheduler: a.Scheduler, Router: a.Router, Providers: a.Providers, UserAI: a.UserAI,
 		Voice: a.Voice, Queue: a.Queue, Metrics: a.Metrics, System: a.System, Health: a.Health,
 		Bus: a.Bus, Log: a.Log, Version: a.Version,
 		VoiceProfiles: voice.NewProfileStore(a.Repos.Settings),

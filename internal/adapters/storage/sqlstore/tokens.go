@@ -94,7 +94,7 @@ func (r *TokenRepo) DeleteExpiredRefresh(ctx context.Context, before time.Time) 
 	return int(n), nil
 }
 
-const apiKeyCols = `id, user_id, name, key_hash, prefix, scopes, last_used_at, expires_at, revoked_at, created_at`
+const apiKeyCols = `id, user_id, name, key_hash, prefix, scopes, provider, model, last_used_at, expires_at, revoked_at, created_at`
 
 func scanAPIKey(row rowScanner) (*domain.APIKey, error) {
 	var (
@@ -105,7 +105,7 @@ func scanAPIKey(row rowScanner) (*domain.APIKey, error) {
 		revoked  sqlNullString
 		created  string
 	)
-	if err := row.Scan(&k.ID, &k.UserID, &k.Name, &k.KeyHash, &k.Prefix, &scopes, &lastUsed, &expires, &revoked, &created); err != nil {
+	if err := row.Scan(&k.ID, &k.UserID, &k.Name, &k.KeyHash, &k.Prefix, &scopes, &k.Provider, &k.Model, &lastUsed, &expires, &revoked, &created); err != nil {
 		return nil, err
 	}
 	k.Scopes = decodeStrings(scopes)
@@ -122,8 +122,8 @@ func (r *TokenRepo) CreateAPIKey(ctx context.Context, k *domain.APIKey) error {
 		k.CreatedAt = time.Now().UTC()
 	}
 	_, err := r.db.ExecContext(ctx, r.db.Rebind(`INSERT INTO api_keys (`+apiKeyCols+`)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
-		k.ID, k.UserID, k.Name, k.KeyHash, k.Prefix, jsonSliceText(k.Scopes),
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
+		k.ID, k.UserID, k.Name, k.KeyHash, k.Prefix, jsonSliceText(k.Scopes), k.Provider, k.Model,
 		ftp(k.LastUsedAt), ftp(k.ExpiresAt), ftp(k.RevokedAt), ft(k.CreatedAt))
 	return mapErr("apikey.create", err)
 }

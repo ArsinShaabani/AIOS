@@ -97,26 +97,34 @@
     }
     return data;
   }
-  function renderLogin() {
+  let authMode = "login";
+  function renderLogin(mode) {
+    authMode = mode || "login";
+    const reg = authMode === "register";
     document.body.innerHTML =
       '<div class="login-wrap"><div class="login-card">' +
       '<div class="brand"><div class="logo">A</div><div><h1>AIOS</h1><p>Personal AI Operating System</p></div></div>' +
       '<form id="login-form">' +
-      '<div class="field"><label>Email</label><input class="input" id="email" type="email" autocomplete="username" value="admin@aios.local" required></div>' +
-      '<div class="field"><label>Password</label><input class="input" id="password" type="password" autocomplete="current-password" required></div>' +
-      '<button class="btn block" id="login-btn" type="submit">Sign in</button>' +
-      '<p class="small muted" style="margin-top:16px">Local-first. Your data stays on this device.</p>' +
+      (reg ? '<div class="field"><label>نام نمایشی</label><input class="input" id="name" autocomplete="name" placeholder="نام شما"></div>' : '') +
+      '<div class="field"><label>ایمیل</label><input class="input" id="email" type="email" autocomplete="username" value="' + (reg ? "" : "admin@aios.local") + '" required></div>' +
+      '<div class="field"><label>رمز عبور</label><input class="input" id="password" type="password" autocomplete="' + (reg ? "new-password" : "current-password") + '" required></div>' +
+      '<button class="btn block" id="login-btn" type="submit">' + (reg ? "ساخت حساب" : "ورود") + '</button>' +
+      '<p class="small muted" style="margin-top:14px">' + (reg ? "حساب داری؟" : "حساب نداری؟") +
+      ' <a href="#" id="auth-toggle">' + (reg ? "وارد شو" : "ثبت‌نام کن") + '</a></p>' +
+      '<p class="small muted">داده‌هایت روی همین سرور می‌ماند.</p>' +
       '</form></div></div><div id="toasts" class="toast"></div>';
     $("#login-form").addEventListener("submit", login);
+    $("#auth-toggle").addEventListener("click", (e) => { e.preventDefault(); renderLogin(reg ? "login" : "register"); });
   }
   async function login(ev) {
     ev.preventDefault();
     const btn = $("#login-btn");
     btn.disabled = true;
     try {
-      const res = await fetch(API + "/auth/login", {
+      const reg = authMode === "register";
+      const res = await fetch(API + (reg ? "/auth/register" : "/auth/login"), {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: $("#email").value.trim(), password: $("#password").value }),
+        body: JSON.stringify({ email: $("#email").value.trim(), password: $("#password").value, display_name: $("#name") ? $("#name").value.trim() : "" }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error((data.error && data.error.message) || "Login failed");
@@ -132,7 +140,7 @@
   const NAV = [
     { group: "Workspace", items: [
       ["overview", "Overview", "◎"], ["chat", "Chat", "✎"], ["sessions", "Sessions", "▤"],
-      ["memory", "Memory", "❖"], ["documents", "Documents", "❐"], ["devices", "Devices", "◈"],
+      ["myai", "هوش مصنوعی من", "⚡"], ["memory", "Memory", "❖"], ["documents", "Documents", "❐"], ["devices", "Devices", "◈"],
     ]},
     { group: "Intelligence", items: [
       ["agents", "Skills & Agents", "✦"], ["models", "Model Router", "⇄"], ["usage", "Usage & Cost", "◷"],
@@ -141,7 +149,7 @@
       ["plugins", "Plugins", "⧉"], ["queue", "Task Queue", "≣"], ["settings", "Settings", "⚙"],
     ]},
     { group: "Admin", items: [
-      ["users", "Users", "☰"], ["logs", "Audit Log", "▦"], ["system", "System", "⌁"],
+      ["users", "Users", "☰"], ["logs", "Audit Log", "▦"], ["system", "System", "⌁"], ["help", "راهنما", "؟"],
     ]},
   ];
   function itemVisible(id) {
@@ -159,14 +167,21 @@
   }
   async function refreshModelChip() {
     const label = $("#model-chip-label"), chip = $("#model-chip");
-    if (!label || !can("models:read")) return;
+    if (!label) return;
     try {
-      const d = await api("/admin/providers");
-      const p = (d.items || []).find((x) => x.default) || (d.items || [])[0];
-      if (!p) { label.textContent = "no model"; chip.classList.add("bad"); return; }
-      label.textContent = p.name + " · " + (p.default_model || "");
-      chip.classList.toggle("bad", !p.healthy);
-      chip.title = p.last_error || "Active model";
+      const sel = localStorage.getItem("aios_chat_model") || "";
+      if (sel) {
+        const parts = sel.split("::");
+        if (parts[0] === "sys") parts.shift();
+        label.textContent = parts.join(" · ");
+        chip.classList.remove("bad");
+        return;
+      }
+      const d = await api("/me/models");
+      const p = (d.items || [])[0];
+      if (!p) { label.textContent = "بدون مدل"; chip.classList.add("bad"); return; }
+      label.textContent = p.provider + " · " + (p.default_model || (p.models || [])[0] || "");
+      chip.classList.remove("bad");
     } catch (e) {}
   }
 
@@ -194,6 +209,7 @@
       '</aside><div class="main">' +
       '<header class="topbar"><h2 id="view-title">Overview</h2><div class="spacer"></div>' +
       '<button class="model-chip" id="model-chip" title="Active model"><span class="dot"></span><span id="model-chip-label">model</span></button>' +
+      '<button class="icon-btn" id="help-btn" title="راهنما">؟</button>' +
       '<button class="icon-btn" id="theme-btn" title="Toggle theme">◐</button>' +
       '<span class="badge"><span class="dot"></span> connected</span>' +
       '<span class="badge" id="clock"></span></header>' +
@@ -201,13 +217,15 @@
       "</div></div>";
     $$(".nav-item").forEach((el) => el.addEventListener("click", () => navigate(el.dataset.view)));
     $("#logout").addEventListener("click", logout);
+    if ($("#help-btn")) $("#help-btn").addEventListener("click", () => navigate("help"));
+    refreshModelChip();
     setInterval(() => {
       const c = $("#clock");
       if (c) c.textContent = new Date().toLocaleTimeString();
     }, 1000);
   }
   const TITLES = {
-    overview: "Overview", chat: "Chat", character: "Characters", sessions: "Sessions", memory: "Memory", documents: "Documents", devices: "Devices",
+    overview: "Overview", chat: "Chat", myai: "هوش مصنوعی من", help: "راهنما", character: "Characters", sessions: "Sessions", memory: "Memory", documents: "Documents", devices: "Devices",
     agents: "Skills & Agents", models: "Model Router", usage: "Usage & Cost", plugins: "Plugins",
     queue: "Task Queue", settings: "Settings", users: "Users", logs: "Audit Log", system: "System",
   };
@@ -232,6 +250,10 @@
     }
     renderShell();
     navigate("overview");
+    if (!localStorage.getItem("aios_onboarded")) {
+      localStorage.setItem("aios_onboarded", "1");
+      setTimeout(() => { if (window.AIOSViews && window.AIOSViews.help) navigate("help"); }, 400);
+    }
   }
   async function logout() {
     try { await api("/auth/logout", { method: "POST", body: { refresh_token: state.refresh } }); } catch (e) {}

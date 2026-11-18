@@ -11,8 +11,12 @@ Group=aios
 WorkingDirectory=/opt/aios
 Environment=AIOS_CONFIG=/etc/aios/config.yaml
 Environment=AIOS_APP_DATA_DIR=/var/lib/aios
-Environment=GOMEMLIMIT=384MiB
-Environment=GOGC=60
+Environment=GOMEMLIMIT=768MiB
+Environment=GOGC=50
+Environment=GOMAXPROCS=2
+MemoryHigh=1500M
+MemoryMax=1800M
+Nice=5
 ExecStart=/usr/local/bin/aios server
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure

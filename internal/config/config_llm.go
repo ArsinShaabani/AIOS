@@ -1,18 +1,19 @@
 package config
 
 type SecurityConfig struct {
-	JWTSecret        string        `yaml:"jwt_secret"`
-	Issuer           string        `yaml:"issuer"`
-	AccessTTL        Duration      `yaml:"access_ttl"`
-	RefreshTTL       Duration      `yaml:"refresh_ttl"`
-	DeviceTokenTTL   Duration      `yaml:"device_token_ttl"`
-	AllowedClockSkew Duration      `yaml:"allowed_clock_skew"`
-	EncryptionKey    string        `yaml:"encryption_key"`
-	BcryptCost       int           `yaml:"bcrypt_cost"`
-	MaxLoginAttempts int           `yaml:"max_login_attempts"`
-	LockoutDuration  Duration      `yaml:"lockout_duration"`
-	Bootstrap        BootstrapUser `yaml:"bootstrap"`
-	AutoGenerateKeys bool          `yaml:"auto_generate_keys"`
+	JWTSecret         string        `yaml:"jwt_secret"`
+	Issuer            string        `yaml:"issuer"`
+	AccessTTL         Duration      `yaml:"access_ttl"`
+	RefreshTTL        Duration      `yaml:"refresh_ttl"`
+	DeviceTokenTTL    Duration      `yaml:"device_token_ttl"`
+	AllowedClockSkew  Duration      `yaml:"allowed_clock_skew"`
+	EncryptionKey     string        `yaml:"encryption_key"`
+	BcryptCost        int           `yaml:"bcrypt_cost"`
+	MaxLoginAttempts  int           `yaml:"max_login_attempts"`
+	LockoutDuration   Duration      `yaml:"lockout_duration"`
+	Bootstrap         BootstrapUser `yaml:"bootstrap"`
+	AutoGenerateKeys  bool          `yaml:"auto_generate_keys"`
+	AllowRegistration bool          `yaml:"allow_registration"`
 }
 
 type BootstrapUser struct {

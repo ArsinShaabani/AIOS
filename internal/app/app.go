@@ -28,6 +28,7 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/security"
 	"github.com/ArsinShaabani/AIOS/internal/tools"
 	"github.com/ArsinShaabani/AIOS/internal/transport/httpapi"
+	"github.com/ArsinShaabani/AIOS/internal/userai"
 	"github.com/ArsinShaabani/AIOS/internal/voice"
 )
 
@@ -49,6 +50,7 @@ type App struct {
 	Auditor   *security.Auditor
 	Secrets   *security.Secrets
 	Providers *providers.Service
+	UserAI    *userai.Service
 
 	Memory        *memory.Service
 	Documents     *documents.Service

@@ -10,14 +10,14 @@ import (
 
 // streamCompletion consumes a router stream, forwarding deltas to the client and
 // collecting tool calls and usage.
-func (e *Engine) streamCompletion(ctx context.Context, route ports.RouteDecision, req ports.ChatRequest, emit EmitFunc) (string, []domain.ToolCall, ports.Usage, string, error) {
+func (e *Engine) streamCompletion(ctx context.Context, router ports.ModelRouter, route ports.RouteDecision, req ports.ChatRequest, emit EmitFunc) (string, []domain.ToolCall, ports.Usage, string, error) {
 	var (
 		b        strings.Builder
 		calls    []domain.ToolCall
 		usage    ports.Usage
 		provider string
 	)
-	stream, err := e.Router.Stream(ctx, route, req)
+	stream, err := router.Stream(ctx, route, req)
 	if err != nil {
 		return "", nil, usage, "", err
 	}

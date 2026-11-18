@@ -121,6 +121,7 @@ func sqliteDSN(dsn, dataDir string) (string, error) {
 		"foreign_keys(ON)",
 		"temp_store(MEMORY)",
 		"mmap_size(67108864)",
+		"cache_size(-8000)",
 	}
 	for _, p := range pragmas {
 		query.Add("_pragma", p)

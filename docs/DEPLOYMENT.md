@@ -167,3 +167,30 @@ keys in `data/keys`).
 | Voice silent | verify STT/TTS URLs from inside the container, then `POST /voice/synthesize` |
 | Devices offline | token mismatch, MQTT prefix, or `command_url` unreachable |
 | High memory | lower `cache.max_entries`, `llm.max_concurrency`, `memory.retrieval_top_k` |
+
+## 2 GB / 2 vCPU profile (v1.3)
+
+Tested target: fresh Debian/Ubuntu server, 2 cores, 2 GB RAM, no swap, no GPU.
+
+```ini
+Environment=GOMEMLIMIT=768MiB
+Environment=GOGC=50
+Environment=GOMAXPROCS=2
+MemoryHigh=1500M
+MemoryMax=1800M
+Nice=5
+```
+
+`deploy/systemd/aios.service` and `install.sh` ship these values. Config tips:
+
+```yaml
+queue: { workers: 2 }
+memory: { max_context_tokens: 8192 }
+llm: { max_tokens: 4096 }
+cache: { max_items: 5000 }
+```
+
+Run local models with a small quantized Ollama model (`qwen2.5:1.5b` or
+`llama3.2:1b`); keep `OLLAMA_NUM_PARALLEL=1` and `OLLAMA_MAX_LOADED_MODELS=1`.
+For a 1 GB box use `GOMEMLIMIT=384MiB` and `max_context_tokens: 4096`.
+The binary is pure Go (no cgo) and memory-maps SQLite via modernc.

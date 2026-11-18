@@ -47,6 +47,8 @@ func (a *API) registerOpsRoutes(mux *http.ServeMux) {
 
 func (a *API) registerAdminRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/admin/overview", a.perm(securityPermUsersRead, a.handleOverview))
+	mux.HandleFunc("GET /api/v1/admin/backup", a.perm(securityPermUsersWrite, a.handleBackup))
+	mux.HandleFunc("POST /api/v1/admin/restore", a.perm(securityPermUsersWrite, a.handleRestore))
 	mux.HandleFunc("GET /api/v1/admin/users", a.perm(securityPermUsersRead, a.handleListUsers))
 	mux.HandleFunc("POST /api/v1/admin/users", a.perm(securityPermUsersWrite, a.handleCreateUser))
 	mux.HandleFunc("PATCH /api/v1/admin/users/{id}", a.perm(securityPermUsersWrite, a.handleUpdateUser))

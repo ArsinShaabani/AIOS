@@ -24,8 +24,8 @@ ENV AIOS_CONFIG=/app/config.yaml \
     AIOS_APP_DATA_DIR=/data \
     AIOS_DATABASE_DSN=/data/aios.db \
     AIOS_SERVER_ADDR=0.0.0.0:8080 \
-    GOMEMLIMIT=384MiB \
-    GOGC=60
+    GOMEMLIMIT=768MiB \
+    GOGC=50
 VOLUME ["/data"]
 EXPOSE 8080
 USER nonroot:nonroot

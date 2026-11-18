@@ -195,3 +195,44 @@ Properties are camelCase in GraphQL (`displayName`, `messageCount`, `agentId`).
 | DELETE | `/api/v1/admin/ollama/models?name=` | admin | Delete a local model |
 
 Keys are write-only: responses only contain hints such as `••••abcd`.
+
+## Personal AI providers and the OpenAI tunnel (v1.3)
+
+All routes below require a normal user session; data is scoped to the caller.
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/v1/me/providers` | List own providers (keys masked) |
+| PUT | `/api/v1/me/providers/{name}` | Upsert `{kind,base_url,api_key,default_model,models,max_tokens,context_window}` |
+| DELETE | `/api/v1/me/providers/{name}` | Remove a provider |
+| POST | `/api/v1/me/providers/discover` | `{name,kind,base_url,api_key}` → models |
+| POST | `/api/v1/me/providers/{name}/test` | Real completion + latency |
+| GET | `/api/v1/me/models` | Provider/model pairs for pickers |
+| POST | `/api/v1/auth/api-keys` | Add `provider`, `model`; scope defaults to `chat` |
+
+### External apps (OpenAI-compatible)
+
+| Method | Path | Auth |
+|---|---|---|
+| POST | `/v1/chat/completions` | `Authorization: Bearer aios_...` |
+| GET | `/v1/models` | same |
+
+Streaming (`"stream":true`), tools/tool-calls, system/user/assistant/tool
+messages and usage are supported. A key bound to `provider`/`model` always uses
+that pair; the client model name is ignored. Requests without a bound provider
+use the key owner's first provider. Errors use the OpenAI envelope
+`{"error":{"message":"...","type":"..."}}`.
+
+## Registration and backups
+
+| Method | Path | Permission |
+|---|---|---|
+| POST | `/api/v1/auth/register` | public when `security.allow_registration` |
+| GET | `/api/v1/admin/backup?data=1` | admin (`users:write`) |
+| POST | `/api/v1/admin/restore` | admin |
+
+Backups are JSON and include users (password hashes), settings, API keys,
+personal providers, devices, personalities, agents, plugins and—with `data=1`—
+sessions, messages, memories and documents. Provider secrets remain encrypted
+with the server keyring; restore on a new host requires the same keyring file.
+Restore is transactional and **replaces** the tables present in the file.

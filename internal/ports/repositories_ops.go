@@ -91,6 +91,14 @@ type TokenRepository interface {
 	TouchAPIKey(ctx context.Context, id string, at time.Time) error
 }
 
+// UserProviderRepository stores per-user BYOK provider credentials.
+type UserProviderRepository interface {
+	List(ctx context.Context, userID string) ([]domain.UserProvider, error)
+	Get(ctx context.Context, userID, name string) (*domain.UserProvider, error)
+	Upsert(ctx context.Context, p *domain.UserProvider) error
+	Delete(ctx context.Context, userID, name string) error
+}
+
 // StatsRepository provides cheap aggregate counters for the dashboard.
 type StatsRepository interface {
 	Overview(ctx context.Context) (Overview, error)

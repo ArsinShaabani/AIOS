@@ -33,15 +33,18 @@ type Engine struct {
 
 // ChatInput is one request to the brain.
 type ChatInput struct {
-	UserID        string         `json:"-"`
-	SessionID     string         `json:"session_id"`
-	Message       string         `json:"message"`
-	AgentID       string         `json:"agent_id,omitempty"`
-	PersonalityID string         `json:"personality_id,omitempty"`
-	Channel       domain.Channel `json:"channel,omitempty"`
-	Stream        bool           `json:"stream,omitempty"`
-	Options       *ChatOptions   `json:"options,omitempty"`
-	Metadata      map[string]any `json:"metadata,omitempty"`
+	UserID        string            `json:"-"`
+	SessionID     string            `json:"session_id"`
+	Message       string            `json:"message"`
+	AgentID       string            `json:"agent_id,omitempty"`
+	PersonalityID string            `json:"personality_id,omitempty"`
+	Channel       domain.Channel    `json:"channel,omitempty"`
+	Stream        bool              `json:"stream,omitempty"`
+	Provider      string            `json:"provider,omitempty"`
+	Model         string            `json:"model,omitempty"`
+	Router        ports.ModelRouter `json:"-"`
+	Options       *ChatOptions      `json:"options,omitempty"`
+	Metadata      map[string]any    `json:"metadata,omitempty"`
 }
 
 // ChatOptions lets a client tune one turn without changing global settings.

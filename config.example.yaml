@@ -92,7 +92,7 @@ llm:
   max_concurrency: 2
   temperature: 0.7
   top_p: 0.9
-  max_tokens: 1024
+  max_tokens: 4096
   daily_budget_usd: 0       # 0 = no cap
   system_prompt: |
     You are AIOS, a local-first personal AI operating system.
@@ -231,7 +231,7 @@ memory:
   max_per_user: 5000
   retrieval_top_k: 5
   min_similarity: 0.25
-  max_context_tokens: 3000
+  max_context_tokens: 8192
 
 observability:
   metrics_enabled: true

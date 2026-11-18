@@ -9,13 +9,36 @@
     const data = await api("/admin/users?limit=100");
     const rows = (data.items || []).map((u) =>
       "<tr><td><strong>" + esc(u.display_name || u.email) + '</strong><div class="small muted">' + esc(u.email) +
-      '</div></td><td><span class="pill">' + esc(u.role) + '</span></td><td><span class="pill ' +
+      '</div></td><td><select class="input sm" data-role="' + esc(u.id) + '">' + ["user", "operator", "viewer", "admin"].map((r) =>
+        '<option' + (u.role === r ? " selected" : "") + ">" + r + "</option>").join("") + '</select></td><td><span class="pill ' +
       (u.status === "active" ? "ok" : "bad") + '">' + esc(u.status) + '</span></td><td class="muted small">' +
-      esc(ago(u.last_login_at)) + "</td></tr>").join("");
+      esc(ago(u.last_login_at)) + '</td><td><button class="btn ghost sm" data-reset="' + esc(u.id) + '">رمز</button> ' +
+      '<button class="btn ghost sm" data-disable="' + esc(u.id) + '" data-status="' + esc(u.status) + '">' +
+      (u.status === "active" ? "غیرفعال" : "فعال") + '</button> ' +
+      '<button class="btn ghost sm" data-del="' + esc(u.id) + '">حذف</button></td></tr>').join("");
     setContent('<div class="toolbar"><div class="muted small">' + (data.total || 0) +
       ' users</div><button class="btn sm" id="user-add">Add user</button></div>' +
-      '<div class="table-wrap"><table><thead><tr><th>User</th><th>Role</th><th>Status</th><th>Last login</th></tr></thead><tbody>' +
-      (rows || '<tr><td colspan="4">No users</td></tr>') + "</tbody></table></div>");
+      '<div class="table-wrap"><table><thead><tr><th>User</th><th>Role</th><th>Status</th><th>Last login</th><th></th></tr></thead><tbody>' +
+      (rows || '<tr><td colspan="5">No users</td></tr>') + "</tbody></table></div>");
+    $$("[data-role]").forEach((sel) => sel.addEventListener("change", async () => {
+      try { await api("/admin/users/" + sel.dataset.role, { method: "PATCH", body: { role: sel.value } }); toast("نقش تغییر کرد", "ok"); }
+      catch (e) { toast(e.message, "bad"); A.navigate("users"); }
+    }));
+    $$("[data-disable]").forEach((b) => b.addEventListener("click", async () => {
+      try { await api("/admin/users/" + b.dataset.disable, { method: "PATCH", body: { status: b.dataset.status === "active" ? "disabled" : "active" } }); A.navigate("users"); }
+      catch (e) { toast(e.message, "bad"); }
+    }));
+    $$("[data-reset]").forEach((b) => b.addEventListener("click", async () => {
+      const pwd = prompt("رمز جدید (حداقل ۸ کاراکتر):");
+      if (!pwd) return;
+      try { await api("/admin/users/" + b.dataset.reset + "/reset-password", { method: "POST", body: { password: pwd } }); toast("رمز تغییر کرد", "ok"); }
+      catch (e) { toast(e.message, "bad"); }
+    }));
+    $$("[data-del]").forEach((b) => b.addEventListener("click", async () => {
+      if (!confirm("کاربر حذف شود؟")) return;
+      try { await api("/admin/users/" + b.dataset.del, { method: "DELETE" }); A.navigate("users"); }
+      catch (e) { toast(e.message, "bad"); }
+    }));
     $("#user-add").addEventListener("click", () => {
       modal('<h3>Add user</h3><div class="form-grid">' +
         '<div class="field"><label>Email</label><input class="input" id="u-email"></div>' +

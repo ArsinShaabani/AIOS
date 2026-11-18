@@ -13,19 +13,24 @@
   }
 
   async function loadModels() {
-    const out = { items: [], current: "" };
-    if (!can("models:read")) return out;
+    const out = { items: [{ value: "", label: "سرور (پیش‌فرض)" }], current: localStorage.getItem("aios_chat_model") || "" };
     try {
-      const d = await api("/admin/providers");
+      const d = await api("/me/models");
       (d.items || []).forEach((p) => {
-        if (!p.enabled) return;
-        const models = (p.models && p.models.length ? p.models : [p.default_model]).filter(Boolean);
-        models.forEach((m) => out.items.push({ value: p.name + "::" + m, label: p.name + " · " + m }));
-        if (p.default) out.current = p.name + "::" + (p.default_model || models[0] || "");
+        (p.models || [p.default_model]).filter(Boolean).forEach((m) =>
+          out.items.push({ value: p.provider + "::" + m, label: p.provider + " · " + m }));
       });
-    } catch (e) {
-      try { (await api("/models")).providers.forEach((p) => out.items.push({ value: p.name, label: p.name })); } catch (e2) {}
-    }
+    } catch (e) {}
+    try {
+      if (can("models:read")) {
+        const d = await api("/admin/providers");
+        (d.items || []).forEach((p) => {
+          if (!p.enabled) return;
+          (p.models && p.models.length ? p.models : [p.default_model]).filter(Boolean).forEach((m) =>
+            out.items.push({ value: "sys::" + p.name + "::" + m, label: "سرور · " + p.name + " · " + m }));
+        });
+      }
+    } catch (e) {}
     return out;
   }
 
@@ -34,6 +39,11 @@
     state.personalities = pers;
     C.personality = localStorage.getItem("aios_default_character") || (pers[0] && pers[0].id) || "";
     const models = await loadModels();
+    const cur = localStorage.getItem("aios_chat_model") || "";
+    const curParts = cur.split("::");
+    if (curParts[0] === "sys") curParts.shift();
+    C.provider = curParts.shift() || "";
+    C.model = curParts.join("::");
     await X.loadSessions();
     C.session = null;
     setContent(
@@ -53,8 +63,10 @@
       '<input type="file" id="c2-file" multiple hidden accept="text/*,.md,.json,.csv,.py,.js,.ts,.go,.html,.css,.yml,.yaml,.sh,.sql,image/*">' +
       '<div class="msgs" id="c2-msgs"><div class="empty-chat"><div class="big">👋 Hi' +
       (state.user && state.user.display_name ? ", " + esc(state.user.display_name) : "") + "</div>" +
-      '<div class="muted">Ask anything. Markdown, code blocks and tool runs are shown inline.</div><div class="suggest">' +
-      ["Explain my devices", "Summarize my documents", "Write a Python script", "Plan my day"].map((t) =>
+      '<div class="muted">هر سؤالی داری بپرس؛ کد، جدول و ابزارها همین‌جا نمایش داده می‌شوند.</div>' +
+      (models.items.length <= 1 ? '<div class="guide"><strong>برای شروع، هوش مصنوعی خودت را وصل کن</strong><p>از منوی «هوش مصنوعی من» یک سرویس‌دهنده اضافه کن — مثلاً Ollama روی همین سرور (بدون کلید) یا Groq/Gemini با کلید رایگان. سپس مدل را از بالای چت انتخاب کن.</p><button class="btn sm" id="c2-go-myai">افزودن مدل</button></div>' : '') +
+      '<div class="suggest">' +
+      ["دستگاه‌هایم را توضیح بده", "اسنادم را خلاصه کن", "یک اسکریپت پایتون بنویس", "برنامه امروزم را بچین"].map((t) =>
         '<button data-sug="' + esc(t) + '">' + esc(t) + "</button>").join("") + "</div></div></div>" +
       '<div class="composer2"><textarea id="c2-input" rows="1" placeholder="Message AIOS…"></textarea>' +
       '<div><button class="btn" id="c2-send">Send</button><button class="btn ghost stop-btn hidden" id="c2-stop">Stop</button></div></div>' +
@@ -67,14 +79,17 @@
       X.loadSessions();
     });
     $("#c2-send").addEventListener("click", () => X.send($("#c2-input").value));
+    if ($("#c2-go-myai")) $("#c2-go-myai").addEventListener("click", () => A.navigate("myai"));
     $("#c2-stop").addEventListener("click", () => { if (C.abort) C.abort.abort(); });
     $("#c2-char").addEventListener("change", (e) => { C.personality = e.target.value; });
-    $("#c2-model").addEventListener("change", async (e) => {
-      const parts = e.target.value.split("::"), provider = parts.shift(), model = parts.join("::");
-      try {
-        await api("/admin/providers/default", { method: "POST", body: { provider, model } });
-        toast("Default model updated", "ok");
-      } catch (err) { toast(err.message, "bad"); }
+    $("#c2-model").addEventListener("change", (e) => {
+      const parts = e.target.value.split("::");
+      const sys = parts[0] === "sys";
+      if (sys) parts.shift();
+      const provider = sys ? "" : (parts.shift() || ""), model = sys ? "" : parts.join("::");
+      C.provider = provider; C.model = model;
+      localStorage.setItem("aios_chat_model", e.target.value);
+      toast("مدل انتخاب شد", "ok");
     });
     const input = $("#c2-input");
     input.addEventListener("input", () => { input.style.height = "auto"; input.style.height = Math.min(180, input.scrollHeight) + "px"; });

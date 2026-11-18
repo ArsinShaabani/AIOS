@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   const A = window.AIOS;
-  const { $, $$, esc, api, toast, setContent, state } = A;
+  const { $, $$, esc, api, toast, setContent, state, can } = A;
   const V = (window.AIOSViews = window.AIOSViews || {});
   const P = () => window.AIOSPrefs;
   const ACCENTS = ["#4f8ef7", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444", "#06b6d4"];
@@ -41,11 +41,15 @@
   }
 
   function dataTab() {
-    return '<div class="card"><div class="section-title" style="margin-top:0">Data</div>' +
-      '<div class="pref-row"><div><div class="lbl">Export conversations</div><div class="sub">Session list as JSON</div></div>' +
-      '<button class="btn sm secondary" id="st-export">Export</button></div>' +
-      '<div class="pref-row"><div><div class="lbl">Reset appearance</div><div class="sub">Restore defaults</div></div>' +
-      '<button class="btn sm ghost" id="st-reset">Reset</button></div></div>';
+    return '<div class="card"><div class="section-title" style="margin-top:0">داده‌ها</div>' +
+      '<div class="pref-row"><div><div class="lbl">خروجی گفتگوها</div><div class="sub">JSON</div></div>' +
+      '<button class="btn sm secondary" id="st-export">خروجی</button></div>' +
+      '<div class="pref-row"><div><div class="lbl">بازنشانی ظاهر</div><div class="sub">تنظیمات پیش‌فرض</div></div>' +
+      '<button class="btn sm ghost" id="st-reset">بازنشانی</button></div>' +
+      (can("users:write") ? '<div class="pref-row"><div><div class="lbl">بکاپ کامل سرور</div><div class="sub">کاربران، تنظیمات، کلیدها، دستگاه‌ها، حافظه‌ها</div></div>' +
+        '<div class="row"><button class="btn sm secondary" id="st-backup">دانلود بکاپ</button>' +
+        '<button class="btn sm ghost" id="st-restore-btn">بازیابی</button></div></div>' +
+        '<input type="file" id="st-restore-file" accept="application/json" class="hidden">' : '') + '</div>';
   }
 
   V.settings = async function () {
@@ -88,6 +92,30 @@
             toast("Export ready", "ok");
           } catch (e) { toast(e.message, "bad"); }
         });
+        if ($("#st-backup")) $("#st-backup").addEventListener("click", async () => {
+          try {
+            const res = await fetch("/api/v1/admin/backup?data=1", { headers: { Authorization: "Bearer " + localStorage.getItem("aios_token") } });
+            if (!res.ok) throw new Error("backup failed");
+            const blob = await res.blob();
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "aios-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+            a.click(); URL.revokeObjectURL(a.href);
+            toast("بکاپ دانلود شد", "ok");
+          } catch (e) { toast(e.message, "bad"); }
+        });
+        if ($("#st-restore-btn")) {
+          $("#st-restore-btn").addEventListener("click", () => $("#st-restore-file").click());
+          $("#st-restore-file").addEventListener("change", async (e) => {
+            const file = e.target.files[0];
+            if (!file || !confirm("همه داده‌های فعلی با این بکاپ جایگزین می‌شوند. مطمئنی؟")) return;
+            try {
+              const doc = JSON.parse(await file.text());
+              await api("/admin/restore", { method: "POST", body: doc });
+              toast("بازیابی انجام شد؛ صفحه را تازه کن", "ok");
+            } catch (err) { toast(err.message, "bad"); }
+          });
+        }
       }
     }
     bind("appearance");

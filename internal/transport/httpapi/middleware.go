@@ -142,6 +142,9 @@ func (a *API) bodyLimit(next http.Handler) http.Handler {
 			if strings.Contains(r.URL.Path, "/voice/transcribe") {
 				limit = 32 << 20 // audio uploads
 			}
+			if strings.Contains(r.URL.Path, "/admin/restore") {
+				limit = 64 << 20 // full server backups
+			}
 			if strings.HasPrefix(r.URL.Path, "/api/v1/documents") {
 				limit = a.Config.RAG.MaxDocumentBytes + (1 << 20)
 			}

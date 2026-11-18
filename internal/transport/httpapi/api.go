@@ -25,6 +25,7 @@ import (
 	"github.com/ArsinShaabani/AIOS/internal/providers"
 	"github.com/ArsinShaabani/AIOS/internal/scheduler"
 	"github.com/ArsinShaabani/AIOS/internal/security"
+	"github.com/ArsinShaabani/AIOS/internal/userai"
 	"github.com/ArsinShaabani/AIOS/internal/voice"
 )
 
@@ -48,6 +49,7 @@ type API struct {
 	Scheduler     *scheduler.Service
 	Router        ports.ModelRouter
 	Providers     *providers.Service
+	UserAI        *userai.Service
 	Voice         *voice.Service
 	VoiceProfiles *voice.ProfileStore
 	Queue         ports.Queue
@@ -84,6 +86,7 @@ func (a *API) Routes() http.Handler {
 
 	a.registerAuthRoutes(mux)
 	a.registerChatRoutes(mux)
+	a.registerUserAIRoutes(mux)
 	a.registerDataRoutes(mux)
 	a.registerOpsRoutes(mux)
 	a.registerAdminRoutes(mux)
@@ -123,7 +126,7 @@ func (a *API) handleMeta(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"name": "AIOS", "version": a.Version, "profile": a.Config.App.Env,
 		"graphql": a.Config.Server.EnableGraphQL, "voice": a.Config.Voice.Enabled,
-		"time": time.Now().UTC(),
+		"time": time.Now().UTC(), "allow_registration": a.Config.Security.AllowRegistration,
 	})
 }
 

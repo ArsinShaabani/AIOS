@@ -9,8 +9,11 @@ import (
 	"time"
 
 	"github.com/ArsinShaabani/AIOS/internal/brain"
+	"github.com/ArsinShaabani/AIOS/internal/config"
 	"github.com/ArsinShaabani/AIOS/internal/domain"
+	"github.com/ArsinShaabani/AIOS/internal/llm"
 	"github.com/ArsinShaabani/AIOS/internal/platform"
+	"github.com/ArsinShaabani/AIOS/internal/ports"
 )
 
 type chatAttachment struct {
@@ -26,6 +29,8 @@ type chatRequest struct {
 	PersonalityID string             `json:"personality_id"`
 	Channel       string             `json:"channel"`
 	Stream        bool               `json:"stream"`
+	Provider      string             `json:"provider,omitempty"`
+	Model         string             `json:"model,omitempty"`
 	Options       *brain.ChatOptions `json:"options"`
 	Attachments   []chatAttachment   `json:"attachments"`
 }
@@ -52,6 +57,35 @@ func (a *API) handleChat(w http.ResponseWriter, r *http.Request) {
 	input := brain.ChatInput{
 		UserID: user.ID, SessionID: req.SessionID, Message: message, Options: req.Options,
 		AgentID: req.AgentID, PersonalityID: req.PersonalityID, Channel: channel, Stream: stream,
+		Provider: req.Provider, Model: req.Model,
+	}
+	providerName := req.Provider
+	modelName := req.Model
+	if providerName == "" && len(a.Router.Providers()) == 0 {
+		if list, err := a.UserAI.List(r.Context(), user.ID); err == nil && len(list) > 0 {
+			providerName = list[0].Name
+			modelName = list[0].DefaultModel
+		}
+	}
+	if providerName != "" {
+		p, pcfg, err := a.UserAI.Build(r.Context(), user.ID, providerName)
+		if err != nil {
+			a.fail(w, r, platform.Invalid("chat.provider", "provider is not available on your account"))
+			return
+		}
+		model := modelName
+		if model == "" {
+			model = pcfg.DefaultModel
+		}
+		llmCfg := config.LLMConfig{DefaultProvider: pcfg.Name, DefaultModel: model,
+			Temperature: a.Config.LLM.Temperature, TopP: a.Config.LLM.TopP,
+			MaxTokens: pcfg.MaxTokens, Timeout: a.Config.LLM.Timeout,
+			MaxRetries: 1, MaxToolIterations: a.Config.LLM.MaxToolIterations, Providers: []config.ProviderConfig{pcfg}}
+		if llmCfg.MaxTokens <= 0 {
+			llmCfg.MaxTokens = 4096
+		}
+		input.Router = llm.NewRouter(llmCfg, map[string]ports.Provider{pcfg.Name: p}, nil, nil, nil, a.Log)
+		input.Model = model
 	}
 	if !stream {
 		out, err := a.Brain.Chat(r.Context(), input, nil)

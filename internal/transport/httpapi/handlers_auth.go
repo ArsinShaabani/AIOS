@@ -106,6 +106,8 @@ type createKeyRequest struct {
 	Name          string   `json:"name"`
 	Scopes        []string `json:"scopes"`
 	ExpiresInDays int      `json:"expires_in_days"`
+	Provider      string   `json:"provider"`
+	Model         string   `json:"model"`
 }
 
 func (a *API) handleCreateAPIKey(w http.ResponseWriter, r *http.Request) {
@@ -121,8 +123,19 @@ func (a *API) handleCreateAPIKey(w http.ResponseWriter, r *http.Request) {
 	}
 	user := userFrom(r.Context())
 	p := principalFrom(r.Context())
+	if req.Provider != "" {
+		req.Provider = strings.ToLower(strings.TrimSpace(req.Provider))
+		if _, err := a.UserAI.Credential(r.Context(), user.ID, req.Provider); err != nil {
+			a.fail(w, r, platform.Invalid("apikey.provider", "add this provider to your account first"))
+			return
+		}
+	}
 	if len(req.Scopes) == 0 {
-		req.Scopes = []string{string(security.PermChat), string(security.PermMemoryRead)}
+		if req.Provider != "" {
+			req.Scopes = []string{string(security.PermChat)}
+		} else {
+			req.Scopes = []string{string(security.PermChat), string(security.PermMemoryRead)}
+		}
 	}
 	for _, scope := range req.Scopes {
 		if !p.Can(security.Permission(scope)) {
@@ -137,7 +150,8 @@ func (a *API) handleCreateAPIKey(w http.ResponseWriter, r *http.Request) {
 	}
 	key := &domain.APIKey{
 		ID: platform.NewID("key"), UserID: user.ID, Name: name, KeyHash: cred.Hash,
-		Prefix: cred.Prefix, Scopes: req.Scopes, CreatedAt: time.Now().UTC(),
+		Prefix: cred.Prefix, Scopes: req.Scopes, Provider: req.Provider, Model: strings.TrimSpace(req.Model),
+		CreatedAt: time.Now().UTC(),
 	}
 	if req.ExpiresInDays > 0 {
 		exp := time.Now().UTC().AddDate(0, 0, req.ExpiresInDays)

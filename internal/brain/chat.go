@@ -52,7 +52,11 @@ func (e *Engine) Chat(ctx context.Context, in ChatInput, emit EmitFunc) (*ChatOu
 	}
 	_ = e.Sessions.Touch(ctx, session.ID, 1, now)
 
-	route := e.Router.Resolve(agent.ID, intent.Name, in.Message)
+	router := e.Router
+	if in.Router != nil {
+		router = in.Router
+	}
+	route := router.Resolve(agent.ID, intent.Name, in.Message)
 	ctxLimit := route.ContextWindow
 	if ctxLimit > 0 {
 		// Leave room for the completion and a small safety margin.
@@ -95,7 +99,7 @@ func (e *Engine) Chat(ctx context.Context, in ChatInput, emit EmitFunc) (*ChatOu
 	}
 	return e.runTurn(ctx, turnState{
 		input: in, user: user, session: session, personality: p, agent: agent,
-		intent: intent, route: route, history: built.Messages, started: start, emit: emit,
+		intent: intent, route: route, router: router, history: built.Messages, started: start, emit: emit,
 	})
 }
 

@@ -356,6 +356,7 @@ security:
   allowed_clock_skew: 30s
   bcrypt_cost: 10
   auto_generate_keys: true
+  allow_registration: true
   bootstrap:
     email: "$ADMIN_EMAIL"
     name: "Administrator"
@@ -372,7 +373,7 @@ llm:
   max_concurrency: 2
   temperature: 0.7
   top_p: 0.9
-  max_tokens: 1024
+  max_tokens: 4096
 
 voice:
   enabled: true
@@ -456,8 +457,12 @@ Group=$APP_USER
 WorkingDirectory=$DATA_DIR
 Environment=AIOS_CONFIG=$CONF_DIR/config.yaml
 Environment=AIOS_APP_DATA_DIR=$DATA_DIR
-Environment=GOMEMLIMIT=384MiB
-Environment=GOGC=60
+Environment=GOMEMLIMIT=768MiB
+Environment=GOGC=50
+Environment=GOMAXPROCS=2
+MemoryHigh=1500M
+MemoryMax=1800M
+Nice=5
 ExecStart=$BIN server
 Restart=on-failure
 RestartSec=3

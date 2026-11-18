@@ -110,3 +110,22 @@ plugins as you would a browser extension: install only from sources you trust.
   provider for higher-quality recall. It never sends data anywhere by itself.
 - Plugin signing covers manifests and WASM bytes; key distribution and
   revocation remain operational responsibilities.
+
+## Bring-your-own-key (v1.3)
+
+- User provider API keys are encrypted with AES-256-GCM using the server keyring
+  before they touch SQLite/Postgres. List/get APIs return only `has_api_key`.
+- Because decryption is required to call upstreams, the keyring file is the
+  highest-value secret on the host: keep `/var/lib/aios/keys/` at `0600`, exclude
+  it from backups that leave the host, and copy it when migrating servers.
+- Tunnel keys (`aios_...`) are stored as SHA-256 hashes, can be scoped to one
+  provider/model, expire, and are revoked per user. They cannot grant more
+  permissions than the account owns.
+- `/v1/chat/completions` requires a valid, unexpired, unrevoked key with the
+  `chat` scope. Upstream provider errors are returned without leaking the key or
+  internal URLs.
+- Backup files contain password hashes and encrypted provider keys. Treat them as
+  secrets; restore is admin-only, transactional and replaces tables wholesale.
+- User-supplied provider base URLs are called server-side, including localhost
+  (required for Ollama). Restrict account creation (`security.allow_registration`)
+  if the server must not reach internal networks for untrusted users.

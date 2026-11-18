@@ -159,3 +159,27 @@ MIT — see [LICENSE](LICENSE).
 - **Appearance**: code font size, chat width + existing theme/accent/density.
 
 See [docs/V1.2.md](docs/V1.2.md).
+
+## Bring your own AI (v1.3)
+
+Every user can connect their **own** provider keys and use AIOS as an
+OpenAI-compatible tunnel for any external app or agent:
+
+1. **هوش مصنوعی من** → add Ollama (keyless), Groq, Gemini, OpenRouter, OpenAI,
+   Anthropic or any OpenAI-compatible endpoint. Keys are encrypted with AES-GCM
+   and never returned by the API.
+2. Create a tunnel API key bound to one provider + model.
+3. Point any OpenAI SDK/agent at `https://your-host/v1` with that key. The real
+   upstream key never leaves the server; the model can be fixed per key.
+
+```bash
+curl https://your-host/v1/chat/completions \
+  -H "Authorization: Bearer aios_..." \
+  -H "Content-Type: application/json" \
+  -d '{"model":"auto","messages":[{"role":"user","content":"سلام"}]}'
+```
+
+Also in v1.3: self-registration, richer device profiles (connection, tone,
+language, requirements, preferred model), full server backup/restore in
+Settings, RTL dashboard with Persian onboarding, 4k default output / 8k context,
+and a 2 GB / 2 vCPU systemd profile (`GOMEMLIMIT=768MiB`, `GOGC=50`).

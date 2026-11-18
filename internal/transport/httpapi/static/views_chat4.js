@@ -22,7 +22,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + state.token },
         signal: C.abort.signal,
-        body: JSON.stringify({ message: text, session_id: C.session || "", stream: true, personality_id: C.personality || "" }),
+        body: JSON.stringify({ message: text, session_id: C.session || "", stream: true, personality_id: C.personality || "", provider: C.provider || "", model: C.model || "" }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));

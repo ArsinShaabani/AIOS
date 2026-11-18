@@ -70,7 +70,8 @@ func Default() Config {
 				Email: "admin@aios.local",
 				Name:  "Administrator",
 			},
-			AutoGenerateKeys: true,
+			AutoGenerateKeys:  true,
+			AllowRegistration: true,
 		},
 		LLM: LLMConfig{
 			DefaultProvider:   "local",
@@ -83,7 +84,7 @@ func Default() Config {
 			MaxConcurrency:    2,
 			Temperature:       0.7,
 			TopP:              0.9,
-			MaxTokens:         1024,
+			MaxTokens:         4096,
 			SystemPrompt:      defaultSystemPrompt,
 			Providers:         defaultProviders(),
 			Routing:           defaultRouting(),
@@ -164,7 +165,7 @@ func Default() Config {
 			MaxPerUser:       5000,
 			RetrievalTopK:    5,
 			MinSimilarity:    0.25,
-			MaxContextTokens: 3000,
+			MaxContextTokens: 8192,
 		},
 		Observability: ObservabilityConfig{
 			MetricsEnabled:   true,

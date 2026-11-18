@@ -93,6 +93,8 @@ type APIKey struct {
 	KeyHash    string     `json:"-"`
 	Prefix     string     `json:"prefix"`
 	Scopes     []string   `json:"scopes"`
+	Provider   string     `json:"provider,omitempty"`
+	Model      string     `json:"model,omitempty"`
 	LastUsedAt *time.Time `json:"last_used_at,omitempty"`
 	ExpiresAt  *time.Time `json:"expires_at,omitempty"`
 	RevokedAt  *time.Time `json:"revoked_at,omitempty"`

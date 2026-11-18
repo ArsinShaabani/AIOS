@@ -18,6 +18,7 @@ type turnState struct {
 	agent       *domain.Agent
 	intent      Intent
 	route       ports.RouteDecision
+	router      ports.ModelRouter
 	history     []ports.ChatMessage
 	started     time.Time
 	emit        EmitFunc
@@ -62,7 +63,7 @@ func (e *Engine) runTurn(ctx context.Context, st turnState) (*ChatOutput, error)
 		)
 		if st.input.Stream && st.emit != nil {
 			var used string
-			text, calls, u, used, err = e.streamCompletion(ctx, st.route, req, st.emit)
+			text, calls, u, used, err = e.streamCompletion(ctx, st.router, st.route, req, st.emit)
 			if used != "" {
 				if used != st.route.Provider {
 					st.degraded = true
@@ -72,7 +73,7 @@ func (e *Engine) runTurn(ctx context.Context, st turnState) (*ChatOutput, error)
 			}
 		} else {
 			var resp *ports.ChatResponse
-			resp, err = e.Router.Chat(ctx, st.route, req)
+			resp, err = st.router.Chat(ctx, st.route, req)
 			if resp != nil {
 				text, calls, u = resp.Content, resp.ToolCalls, resp.Usage
 				// The router may have answered from a fallback provider; report what

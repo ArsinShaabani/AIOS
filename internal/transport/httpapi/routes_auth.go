@@ -6,6 +6,7 @@ import (
 
 func (a *API) registerAuthRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/auth/login", a.handleLogin)
+	mux.HandleFunc("POST /api/v1/auth/register", a.handleRegister)
 	mux.HandleFunc("POST /api/v1/auth/refresh", a.handleRefresh)
 	mux.HandleFunc("POST /api/v1/auth/logout", a.authed(a.handleLogout))
 	mux.HandleFunc("GET /api/v1/auth/me", a.authed(a.handleMe))
@@ -59,4 +60,17 @@ func (a *API) registerDataRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/device/telemetry", a.deviceAuthed(a.handleDeviceIngest))
 	mux.HandleFunc("POST /api/v1/device/heartbeat", a.deviceAuthed(a.handleDeviceHeartbeat))
 	mux.HandleFunc("GET /api/v1/device/me", a.deviceAuthed(a.handleDeviceMe))
+}
+
+func (a *API) registerUserAIRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /api/v1/me/providers", a.authed(a.handleListUserProviders))
+	mux.HandleFunc("PUT /api/v1/me/providers/{name}", a.authed(a.handleUpsertUserProvider))
+	mux.HandleFunc("DELETE /api/v1/me/providers/{name}", a.authed(a.handleDeleteUserProvider))
+	mux.HandleFunc("POST /api/v1/me/providers/discover", a.authed(a.handleDiscoverUserProvider))
+	mux.HandleFunc("POST /api/v1/me/providers/{name}/test", a.authed(a.handleTestUserProvider))
+	mux.HandleFunc("GET /api/v1/me/models", a.authed(a.handleUserModels))
+
+	// OpenAI-compatible tunnel for external apps and agents.
+	mux.HandleFunc("POST /v1/chat/completions", a.handleTunnelChat)
+	mux.HandleFunc("GET /v1/models", a.handleTunnelModels)
 }
