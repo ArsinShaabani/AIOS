@@ -180,6 +180,16 @@ curl https://your-host/v1/chat/completions \
   -d '{"model":"auto","messages":[{"role":"user","content":"سلام"}]}'
 ```
 
+Agent clients (Hermes, opencode, Cline, Aider …) send a system prompt **plus every
+tool schema** on each turn, so a single request is often 10 000–20 000 tokens.
+Free provider tiers meter **tokens per minute**: Groq on-demand allows 8 000 TPM
+for `openai/gpt-oss-120b` and 7 000 input TPM for `qwen/qwen3.8-27b`, so those
+turns fail with `429`/`413` no matter how small the chat message is. For agent
+work use a plan with a bigger budget (Gemini free tier ≈ 1 M TPM, Mistral free
+tier ≈ 500 K TPM, Groq Dev Tier) or a local Ollama model. The tunnel now returns
+the upstream status (401/413/429/…) instead of a generic `502`, so the client
+shows *why* it failed.
+
 Also in v1.3: self-registration, richer device profiles (connection, tone,
 language, requirements, preferred model), full server backup/restore in
 Settings, RTL dashboard with Persian onboarding, 4k default output / 8k context,

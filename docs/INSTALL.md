@@ -109,6 +109,7 @@ provider ollama (models: qwen2.5:1.5b)
 | `model not found` | model not pulled | `ollama pull qwen2.5:1.5b` |
 | `404` on `/v1/chat/completions` | AIOS older than v1.0.3 | upgrade |
 | first token takes minutes | model too large for RAM | pick a smaller model |
+| agent/CLI client fails every turn with “The AI service returned an error” | free-tier **tokens-per-minute** cap (Groq on-demand is 8 000 TPM for `openai/gpt-oss-120b`, 7 000 input TPM for `qwen/qwen3.8-27b`); agent prompts (system prompt + tool schemas) are routinely 10 000+ tokens | use a provider with a larger TPM budget (Gemini free tier ≈ 1 M TPM, Mistral ≈ 500 K TPM), upgrade to Groq Dev Tier, or trim the agent's tools/system prompt |
 
 ## Local model (Ollama)
 

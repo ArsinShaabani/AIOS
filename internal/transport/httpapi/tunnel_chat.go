@@ -47,15 +47,23 @@ func (a *API) handleTunnelChat(w http.ResponseWriter, r *http.Request) {
 	}
 	maxTokens := req.MaxTokens
 	if maxTokens <= 0 {
-		for _, m := range cfg.Models {
-			if m.Name == model && m.MaxOutputTokens > 0 {
-				maxTokens = m.MaxOutputTokens
-				break
-			}
+		maxTokens = req.MaxCompletionTokens
+	}
+	modelCap := 0
+	for _, m := range cfg.Models {
+		if m.Name == model && m.MaxOutputTokens > 0 {
+			modelCap = m.MaxOutputTokens
+			break
 		}
 	}
 	if maxTokens <= 0 {
+		maxTokens = modelCap
+	}
+	if maxTokens <= 0 {
 		maxTokens = 8192
+	}
+	if modelCap > 0 && maxTokens > modelCap {
+		maxTokens = modelCap
 	}
 	temperature := 0.7
 	if req.Temperature != nil {
@@ -87,7 +95,8 @@ func (a *API) handleTunnelChat(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := provider.Chat(r.Context(), chatReq)
 	if err != nil {
-		writeOAError(w, http.StatusBadGateway, "upstream_error", err.Error())
+		a.Log.Warn("tunnel upstream failure", "provider", providerName, "model", model, "error", err)
+		writeProviderFailure(w, err)
 		return
 	}
 	msg := map[string]any{"role": "assistant", "content": resp.Content}
@@ -115,7 +124,8 @@ func (a *API) tunnelStream(w http.ResponseWriter, r *http.Request, provider port
 	}
 	ch, err := provider.Stream(r.Context(), req)
 	if err != nil {
-		writeOAError(w, http.StatusBadGateway, "upstream_error", err.Error())
+		a.Log.Warn("tunnel upstream failure", "model", req.Model, "error", err)
+		writeProviderFailure(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/event-stream")
@@ -137,6 +147,7 @@ func (a *API) tunnelStream(w http.ResponseWriter, r *http.Request, provider port
 		flusher.Flush()
 	}
 	send(map[string]any{"role": "assistant"}, "", nil)
+	sawTools := false
 	for chunk := range ch {
 		if chunk.Err != nil {
 			raw, _ := json.Marshal(map[string]any{"error": map[string]any{"message": chunk.Err.Error(), "type": "upstream_error"}})
@@ -147,10 +158,17 @@ func (a *API) tunnelStream(w http.ResponseWriter, r *http.Request, provider port
 			send(map[string]any{"content": chunk.Delta}, "", nil)
 		}
 		if len(chunk.ToolCalls) > 0 {
+			sawTools = true
 			send(map[string]any{"tool_calls": oaToolCalls(chunk.ToolCalls)}, "", nil)
 		}
 		if chunk.Done {
-			send(map[string]any{}, "stop", chunk.Usage)
+			// OpenAI reports "tool_calls" when the turn ends on a tool call;
+			// agents use it to decide whether to run the call or finish.
+			finish := "stop"
+			if sawTools {
+				finish = "tool_calls"
+			}
+			send(map[string]any{}, finish, chunk.Usage)
 			break
 		}
 	}
@@ -161,7 +179,7 @@ func (a *API) tunnelStream(w http.ResponseWriter, r *http.Request, provider port
 func oaMessages(in []oaMessage) []ports.ChatMessage {
 	out := make([]ports.ChatMessage, 0, len(in))
 	for _, m := range in {
-		msg := ports.ChatMessage{Role: domain.MessageRole(m.Role), Content: m.Content,
+		msg := ports.ChatMessage{Role: domain.MessageRole(m.Role), Content: m.Content.String(),
 			Name: m.Name, ToolCallID: m.ToolCallID}
 		for _, tc := range m.ToolCalls {
 			args := map[string]any{}
